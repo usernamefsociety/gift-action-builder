@@ -23,7 +23,7 @@ body:not(.overlay){overflow-x:hidden}
 #app input[type=range]{display:block;width:100%;max-width:100%;min-width:0}
 #app .giftlist{grid-template-columns:repeat(auto-fill,minmax(min(235px,100%),1fr))}
 #app .preview{overflow:hidden;contain:layout paint}
-#app .tickerwrap{overflow:hidden;clip-path:inset(0);contain:strict}
+#app .tickerwrap{display:block;position:relative;overflow:hidden;clip-path:inset(0);contain:layout paint;min-width:0;width:100%;max-width:100%}
 #app .ticker{max-width:none;min-width:max-content}
 @media(max-width:1050px){
  #app.app{padding:16px}
@@ -34,6 +34,20 @@ body:not(.overlay){overflow-x:hidden}
  #app .layout{grid-template-columns:minmax(0,1fr)}
  #app .formgrid,#app .grid2{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* v10: seamless ticker loop and intrinsic-size-safe preview */
+@keyframes tickerLoop{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(-50%,0,0)}
+}
+#app .tickerwrap{contain:layout paint!important;overflow:hidden!important;min-width:0!important;max-width:100%!important;width:100%!important}
+#app .ticker{display:flex!important;flex-wrap:nowrap!important;width:max-content!important;min-width:max-content!important;max-width:none!important;animation: tickerLoop var(--duration,28s) linear infinite!important}
+#app .ticker-group{display:flex!important;flex:0 0 auto!important;width:max-content!important;min-width:max-content!important}
+#app .preview{display:block;min-width:0;max-width:100%;overflow:hidden}
+#app .preview .tickerwrap{height:auto;min-height:calc(var(--icon-size,64px) + 34px);max-height:none}
+body.overlay .tickerwrap{contain:layout paint!important;overflow:hidden!important;width:100vw!important;max-width:100vw!important;min-width:0!important}
+body.overlay .ticker{animation:tickerLoop var(--duration,28s) linear infinite!important}
 
 </style></head><body>
 <div id="app" class="app">
@@ -118,23 +132,30 @@ function render(){
 function tickerMarkup(){const actions=active().actions;return actions.map(a=>{const g=giftById(a.giftIndex);if(!g)return '';return `<div class="tile"><img src="${g.src}" alt="${esc(g.name)}"><b>${esc(a.action)}</b></div>`}).join('')}
 function fillTicker(el,items){
  if(!el)return;
- if(!items){el.innerHTML='<div class="empty">Добавь действия, чтобы увидеть бегущую строку</div>';el.style.removeProperty('--cycle-distance');return}
+ el.style.animation='none';
+ el.innerHTML='';
+ el.style.removeProperty('--cycle-distance');
+ if(!items){
+   el.innerHTML='<div class="empty">Добавь действия, чтобы увидеть бегущую строку</div>';
+   return;
+ }
  const wrap=el.parentElement;
  const available=Math.max(1,wrap.clientWidth||window.innerWidth||800);
- el.innerHTML=`<div class="ticker-group">${items}</div><div class="ticker-group" aria-hidden="true">${items}</div>`;
  applyStyle(el);
- let group=el.querySelector('.ticker-group');
- let base=Math.max(1,group.getBoundingClientRect().width);
- const target=Math.max(available*2,base);
- const repeats=Math.max(1,Math.ceil(target/base));
- if(repeats>1){
-   const repeated=items.repeat(repeats);
-   el.innerHTML=`<div class="ticker-group">${repeated}</div><div class="ticker-group" aria-hidden="true">${repeated}</div>`;
-   applyStyle(el);
-   group=el.querySelector('.ticker-group');
- }
- const cycleWidth=Math.ceil(group.getBoundingClientRect().width);
- el.style.setProperty('--cycle-distance',cycleWidth+'px');
+ const probe=document.createElement('div');
+ probe.className='ticker-group';
+ probe.innerHTML=items;
+ el.appendChild(probe);
+ const baseWidth=Math.max(1,probe.getBoundingClientRect().width);
+ const repeatCount=Math.max(1,Math.ceil((available*1.5)/baseWidth));
+ const sequence=items.repeat(repeatCount);
+ el.innerHTML=`<div class="ticker-group">${sequence}</div><div class="ticker-group" aria-hidden="true">${sequence}</div>`;
+ applyStyle(el);
+ /* Both halves are byte-for-byte identical; -50% of the complete track
+    is exactly one half, so the animation can wrap without a seam. */
+ el.style.width='max-content';
+ el.style.animation='tickerLoop var(--duration,28s) linear infinite';
+ el.style.willChange='transform';
 }
 function renderTicker(){const el=$('previewTicker');fillTicker(el,tickerMarkup())}
 window.addEventListener('resize',()=>{if(!document.body.classList.contains('overlay'))renderTicker()});
