@@ -362,21 +362,32 @@ function fillTicker(el,items){
 function renderTicker(){const el=$('previewTicker');fillTicker(el,tickerMarkup())}
 window.addEventListener('resize',()=>{if(!document.body.classList.contains('overlay'))renderTicker()});
 function applyStyle(el){el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
-function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
+function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" onclick="window.openSavedSet(decodeURIComponent('${encodeURIComponent(s.id)}'))" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
 function switchTab(id){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
-function openSavedSet(id){
+window.openSavedSet = function(id){
  const target=state.sets.find(item=>String(item.id)===String(id));
- if(!target){toast('Не удалось найти этот набор');return}
+ if(!target){toast('Не удалось найти этот набор');return false}
  state.activeSet=target.id;
  localStorage.setItem(STORE,JSON.stringify(state));
  render();
- switchTab('builder');
+ /* Directly activate the editor panel, independently of delegated nav handlers. */
+ document.querySelectorAll('.tab').forEach(tab=>{
+   tab.classList.toggle('hidden',tab.id!=='builder');
+ });
+ document.querySelectorAll('.nav button').forEach(button=>{
+   button.classList.toggle('active',button.dataset.tab==='builder');
+ });
  requestAnimationFrame(()=>{
-   switchTab('builder');
+   const builder=document.getElementById('builder');
+   if(builder)builder.classList.remove('hidden');
+   document.querySelectorAll('.tab').forEach(tab=>{
+     if(tab.id!=='builder')tab.classList.add('hidden');
+   });
    window.scrollTo({top:0,behavior:'smooth'});
  });
  toast('Открыт набор: '+target.name);
-}
+ return true;
+};
 
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 function openDialog(a=null){editing=a?.id||null;chosen=a?giftById(a.giftIndex):null;$('dialogTitle').textContent=a?'Редактировать действие':'Добавить действие';$('catalogSearch').value='';$('catalogSort').value='priceAsc';catalogLimit=160;$('actionName').value=a?.action||'';if(chosen){showActionStep()}else{showCatalog()}$('actionDialog').showModal()}
@@ -391,13 +402,6 @@ $('addAction').onclick=()=>openDialog();
 $('actionList').onclick=e=>{const up=e.target.closest('[data-up]'),down=e.target.closest('[data-down]');if(up||down){const id=(up||down).dataset[up?'up':'down'];const list=active().actions;const from=list.findIndex(x=>x.id===id);const to=from+(up?-1:1);if(from>=0&&to>=0&&to<list.length){[list[from],list[to]]=[list[to],list[from]];persist();render()}return}const ed=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]'),hide=e.target.closest('[data-hide]');if(ed){const a=active().actions.find(x=>x.id===ed.dataset.edit);openDialog(a)}if(hide){const a=active().actions.find(x=>x.id===hide.dataset.hide);if(a){a.hidden=!a.hidden;persist();render();toast(a.hidden?'Действие скрыто из Overlay':'Действие снова отображается в Overlay')}}if(del){active().actions=active().actions.filter(x=>x.id!==del.dataset.del);persist();render()}};
 $('setName').onchange=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();renderSets()};$('saveSet').onclick=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();toast('Набор сохранён')};
 $('newSet').onclick=()=>{const name=prompt('Название нового набора:','Новый игровой набор');if(!name)return;const s={id:uid(),name,actions:[],cloudId:null,publicId:null,isPublic:false};state.sets.push(s);state.activeSet=s.id;persist();render();switchTab('builder')};
-$('setList').addEventListener('click',e=>{
- const openButton=e.target.closest('[data-load]');
- if(!openButton)return;
- e.preventDefault();
- e.stopPropagation();
- openSavedSet(openButton.dataset.load);
-},true);
 $('setList').addEventListener('click',e=>{
  const d=e.target.closest('[data-setdel]'),c=e.target.closest('[data-setcopy]');
  if(c){
