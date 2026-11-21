@@ -194,8 +194,8 @@ body.auth-open #accountPanel{display:block!important}
 /* v19: alternate rotating-list overlay */
 .rotator-setting{display:none}
 body.rotator-selected .rotator-setting{display:block}
-.rotator-stage{width:100%;min-width:0;display:grid;grid-template-columns:repeat(var(--row-count,5),minmax(0,1fr));gap:var(--gap,22px);opacity:1;transform:translateY(0);transition:opacity .65s ease,transform .65s ease}
-.rotator-stage.is-fading{opacity:0;transform:translateY(8px)}
+.rotator-stage{width:100%;min-width:0;display:grid;grid-template-columns:repeat(var(--row-count,5),minmax(0,1fr));gap:var(--gap,22px);opacity:1;transform:translateY(0) scale(1);filter:blur(0);transition:opacity 1.15s cubic-bezier(.22,.61,.36,1),transform 1.15s cubic-bezier(.22,.61,.36,1),filter 1.15s cubic-bezier(.22,.61,.36,1);will-change:opacity,transform,filter}
+.rotator-stage.is-fading{opacity:0;transform:translateY(-10px) scale(.985);filter:blur(3px)}
 .rotator-stage .tile{width:100%;min-width:0;max-width:100%;overflow:hidden}
 .rotator-stage .tile b{overflow-wrap:anywhere}
 .rotator-stage .tile img{max-width:100%}
@@ -382,14 +382,21 @@ function fillTicker(el,items){
        old.classList.add('is-fading');
        setTimeout(()=>{
          if(!el.isConnected)return;
-         el.innerHTML=`<div class="rotator-stage">${pages[index]}</div>`;
-       },650);
-     }else el.innerHTML=`<div class="rotator-stage">${pages[index]}</div>`;
+         el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
+         const next=el.querySelector('.rotator-stage');
+         requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.remove('is-fading')));
+       },1150);
+     }else{
+       el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
+       const first=el.querySelector('.rotator-stage');
+       requestAnimationFrame(()=>requestAnimationFrame(()=>first.classList.remove('is-fading')));
+     }
    };
    let page=0;showPage(page);
    if(pages.length>1){
      const duration=Math.max(2,Number(state.settings.rowDuration)||5)*1000;
-     el._rotateTimer=setInterval(()=>{page=(page+1)%pages.length;showPage(page)},duration);
+     const transitionMs=1150;
+     el._rotateTimer=setInterval(()=>{page=(page+1)%pages.length;showPage(page)},duration+transitionMs);
    }
    return;
  }
