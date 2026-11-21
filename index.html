@@ -165,14 +165,39 @@ body.overlay .overlaypage .tickerwrap{width:100vw!important;max-width:1080px!imp
   #setList .setactions{justify-content:flex-start!important}
 }
 
+
+/* v16: compact account popover in the top-right */
+.top{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px}
+.auth-toggle{margin-left:auto;white-space:nowrap}
+#accountPanel{
+ position:fixed!important;top:76px!important;right:24px!important;z-index:1000!important;
+ width:min(440px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;
+ margin:0!important;display:none!important;
+ box-shadow:0 18px 55px rgba(0,0,0,.5);border:1px solid var(--line);
+}
+body.auth-open #accountPanel{display:block!important}
+#accountPanel .panelhead{align-items:flex-start}
+#accountPanel .formgrid{grid-template-columns:minmax(0,1fr)!important}
+#accountPanel .field input{width:100%;min-width:0}
+#accountPanel .actions{display:flex;flex-wrap:wrap;gap:8px}
+#accountPanel .sub{line-height:1.45}
+#saveSet{display:none!important}
+#publishBtn{display:none!important}
+#cloudSaveBtn.hidden{display:inline-flex!important;opacity:.65}
+#cloudSaveBtn.save-main{background:linear-gradient(110deg,#9854d4,#c05fae)!important;color:#fff!important;border-color:transparent!important;font-weight:700!important;box-shadow:0 5px 18px rgba(169,83,205,.24)}
+#cloudSaveBtn.save-main:hover{filter:brightness(1.08)}
+.setcard.is-active{border-color:#b36ad8!important;box-shadow:0 0 0 1px rgba(179,106,216,.35),0 0 18px rgba(179,106,216,.12)}
+.setcard.is-active .setdetail strong:after{content:" · ВЫБРАН";font-size:10px;color:#d79aff;font-weight:700}
+@media(max-width:560px){#accountPanel{right:16px!important;top:68px!important}}
+
 </style></head><body>
 <div id="app" class="app">
-<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div></header>
+<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
 <div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button></div><div class="hint">КАТАЛОГ ИЗ ВАШИХ АРХИВОВ · 1 115 ИКОНОК</div></aside>
 <main class="main">
 <section class="panel" id="accountPanel"><div class="panelhead"><div><h2>Облачный аккаунт</h2><div class="sub" id="authStatus">Войди или зарегистрируйся, чтобы сохранять наборы в облаке</div></div><span class="pill" id="cloudBadge">Локальный режим</span></div><div class="formgrid"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Пароль</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 8 символов"></div></div><div class="actions" style="margin-top:12px"><button class="primary" id="signInBtn">Войти</button><button id="signUpBtn">Создать аккаунт</button><button id="signOutBtn" class="hidden">Выйти</button><button id="cloudLoadBtn" class="hidden">Загрузить мои наборы</button></div><div class="sub" style="margin-top:9px">Локальная копия остаётся в этом браузере. Для облачной синхронизации войди в аккаунт.</div></section>
 <section id="builder" class="tab">
-<div class="panel"><div class="panelhead"><div><h2>Текущий набор</h2><div class="sub">Выбирай существующий подарок TikTok и вписывай, какое игровое действие он запускает</div></div><span class="pill" id="giftCount">0 действий</span></div><div class="row"><div class="grow"><label>Название набора</label><input id="setName" value="Мои игровые действия"></div><div class="actions" style="margin-top:20px"><button id="saveSet" class="primary">Сохранить локально</button><button id="cloudSaveBtn" class="hidden">Сохранить в облако</button><button id="publishBtn" class="hidden">Опубликовать Overlay</button></div></div></div>
+<div class="panel"><div class="panelhead"><div><h2>Текущий набор</h2><div class="sub">Выбирай существующий подарок TikTok и вписывай, какое игровое действие он запускает</div></div><span class="pill" id="giftCount">0 действий</span></div><div class="row"><div class="grow"><label>Название набора</label><input id="setName" value="Мои игровые действия"></div><div class="actions" style="margin-top:20px"><button id="saveSet" class="hidden">Сохранить локально</button><button id="cloudSaveBtn" class="primary save-main">Сохранить</button><button id="publishBtn" class="hidden">Опубликовать Overlay</button></div></div></div>
 <div class="panel"><div class="panelhead"><div><h2>Действия за подарки</h2><div class="sub">Каждая карточка — выбранный подарок и подпись действия под его иконкой</div></div><button id="addAction" class="primary">＋ Добавить действие</button></div><div id="actionList" class="giftlist"></div></div>
 
 <div class="panel" id="tickerSettingsPanel">
@@ -221,7 +246,18 @@ function persist(){localStorage.setItem(STORE,JSON.stringify(state));if(currentU
 let currentUser=null,cloudBusy=false;
 function cloudConfig(set){return {actions:set.actions,settings:state.settings}}
 async function cloudSaveActive(show=true){if(!currentUser||cloudBusy)return;const set=active();if(!set)return;cloudBusy=true;try{const id=set.cloudId||crypto.randomUUID();const duplicatePublicId=set.publicId&&state.sets.some(other=>other.id!==set.id&&other.publicId===set.publicId);const publicId=(!set.publicId||duplicatePublicId)?crypto.randomUUID():set.publicId;const payload={id,public_id:publicId,owner_id:currentUser.id,title:set.name,game:set.game||'',config:cloudConfig(set),is_public:!!set.isPublic,updated_at:new Date().toISOString()};const {data: saved,error}=await db.from('gift_sets').upsert(payload,{onConflict:'id'}).select('public_id').single();if(error)throw error;set.cloudId=id;set.publicId=saved.public_id||publicId;localStorage.setItem(STORE,JSON.stringify(state));if(show)toast('Набор сохранён в облаке')}catch(e){console.error(e);if(show)toast('Ошибка облачного сохранения: '+(e.message||e))}finally{cloudBusy=false}}
-function authUi(user){currentUser=user;$('authStatus').textContent=user?'Вход выполнен: '+user.email:'Войди или зарегистрируйся, чтобы сохранять наборы в облаке';$('cloudBadge').textContent=user?'Облако подключено':'Локальный режим';$('signInBtn').classList.toggle('hidden',!!user);$('signUpBtn').classList.toggle('hidden',!!user);$('signOutBtn').classList.toggle('hidden',!user);$('cloudLoadBtn').classList.toggle('hidden',!user);$('cloudSaveBtn').classList.toggle('hidden',!user);$('publishBtn').classList.toggle('hidden',!user)}
+function authUi(user){
+ currentUser=user;
+ $('authStatus').textContent=user?'Вход выполнен: '+user.email:'Войди или зарегистрируйся, чтобы сохранять наборы в облаке';
+ $('cloudBadge').textContent=user?'Облако подключено':'Локальный режим';
+ $('authToggle').textContent=user?('Аккаунт · '+user.email):'Войти в аккаунт';
+ $('signInBtn').classList.toggle('hidden',!!user);
+ $('signUpBtn').classList.toggle('hidden',!!user);
+ $('signOutBtn').classList.toggle('hidden',!user);
+ $('cloudLoadBtn').classList.toggle('hidden',!user);
+ $('cloudSaveBtn').classList.remove('hidden');
+ $('publishBtn').classList.add('hidden');
+}
 async function cloudLoadMine(){if(!currentUser)return;const {data,error}=await db.from('gift_sets').select('*').eq('owner_id',currentUser.id).order('updated_at',{ascending:false});if(error){toast('Не удалось загрузить наборы: '+error.message);return}if(!data?.length){toast('В облаке пока нет наборов');return}const sets=data.map(r=>({id:r.id,name:r.title,game:r.game||'',actions:r.config?.actions||[],cloudId:r.id,publicId:r.public_id,isPublic:r.is_public}));state.sets=sets;state.activeSet=sets[0].id;if(data[0].config?.settings)state.settings={...state.settings,...data[0].config.settings};localStorage.setItem(STORE,JSON.stringify(state));render();toast('Загружено наборов: '+sets.length)}
 async function publishActive(){
  if(!currentUser){toast('Сначала войди в облачный аккаунт');return false}
@@ -260,11 +296,21 @@ async function ensurePublishedOverlay(){
  return location.href.split('?')[0]+'?overlay='+uniquePublicId;
 }
 async function initAuth(){const {data}=await db.auth.getSession();authUi(data.session?.user||null);db.auth.onAuthStateChange((_event,session)=>authUi(session?.user||null))}
-$('signInBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}const {data,error}=await db.auth.signInWithPassword({email,password});if(error){toast('Ошибка входа: '+error.message);return}authUi(data.user);toast('Вход выполнен');await cloudLoadMine()};
-$('signUpBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}if(password.length<8){toast('Пароль должен содержать минимум 8 символов');return}const {data,error}=await db.auth.signUp({email,password});if(error){toast('Ошибка регистрации: '+error.message);return}if(data.session){authUi(data.user);toast('Аккаунт создан');}else{toast('Аккаунт создан. Проверь почту и подтверди регистрацию.')}};
+
+$('authToggle').onclick=()=>document.body.classList.toggle('auth-open');
+document.addEventListener('click',e=>{if(document.body.classList.contains('auth-open')&&!e.target.closest('#accountPanel')&&!e.target.closest('#authToggle'))document.body.classList.remove('auth-open')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('auth-open')});
+$('signInBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}const {data,error}=await db.auth.signInWithPassword({email,password});if(error){toast('Ошибка входа: '+error.message);return}authUi(data.user);document.body.classList.remove('auth-open');toast('Вход выполнен');await cloudLoadMine()};
+$('signUpBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}if(password.length<8){toast('Пароль должен содержать минимум 8 символов');return}const {data,error}=await db.auth.signUp({email,password});if(error){toast('Ошибка регистрации: '+error.message);return}if(data.session){authUi(data.user);document.body.classList.remove('auth-open');toast('Аккаунт создан');}else{toast('Аккаунт создан. Проверь почту и подтверди регистрацию.')}};
 $('signOutBtn').onclick=async()=>{const {error}=await db.auth.signOut();if(error){toast('Ошибка выхода: '+error.message);return}authUi(null);toast('Вы вышли из аккаунта')};
 $('cloudLoadBtn').onclick=cloudLoadMine;
-$('cloudSaveBtn').onclick=async()=>{active().name=$('setName').value.trim()||'Новый набор';await cloudSaveActive(true)};
+$('cloudSaveBtn').onclick=async()=>{
+ active().name=$('setName').value.trim()||'Новый набор';
+ localStorage.setItem(STORE,JSON.stringify(state));
+ if(!currentUser){document.body.classList.add('auth-open');toast('Войди в аккаунт, чтобы сохранить набор в облако');return}
+ await cloudSaveActive(true);
+ renderSets();
+};
 $('publishBtn').onclick=publishActive;
 
 
@@ -316,7 +362,7 @@ function fillTicker(el,items){
 function renderTicker(){const el=$('previewTicker');fillTicker(el,tickerMarkup())}
 window.addEventListener('resize',()=>{if(!document.body.classList.contains('overlay'))renderTicker()});
 function applyStyle(el){el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
-function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}">${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
+function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
 function switchTab(id){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 function openDialog(a=null){editing=a?.id||null;chosen=a?giftById(a.giftIndex):null;$('dialogTitle').textContent=a?'Редактировать действие':'Добавить действие';$('catalogSearch').value='';$('catalogSort').value='priceAsc';catalogLimit=160;$('actionName').value=a?.action||'';if(chosen){showActionStep()}else{showCatalog()}$('actionDialog').showModal()}
@@ -331,7 +377,34 @@ $('addAction').onclick=()=>openDialog();
 $('actionList').onclick=e=>{const up=e.target.closest('[data-up]'),down=e.target.closest('[data-down]');if(up||down){const id=(up||down).dataset[up?'up':'down'];const list=active().actions;const from=list.findIndex(x=>x.id===id);const to=from+(up?-1:1);if(from>=0&&to>=0&&to<list.length){[list[from],list[to]]=[list[to],list[from]];persist();render()}return}const ed=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]'),hide=e.target.closest('[data-hide]');if(ed){const a=active().actions.find(x=>x.id===ed.dataset.edit);openDialog(a)}if(hide){const a=active().actions.find(x=>x.id===hide.dataset.hide);if(a){a.hidden=!a.hidden;persist();render();toast(a.hidden?'Действие скрыто из Overlay':'Действие снова отображается в Overlay')}}if(del){active().actions=active().actions.filter(x=>x.id!==del.dataset.del);persist();render()}};
 $('setName').onchange=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();renderSets()};$('saveSet').onclick=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();toast('Набор сохранён')};
 $('newSet').onclick=()=>{const name=prompt('Название нового набора:','Новый игровой набор');if(!name)return;const s={id:uid(),name,actions:[],cloudId:null,publicId:null,isPublic:false};state.sets.push(s);state.activeSet=s.id;persist();render();switchTab('builder')};
-$('setList').onclick=e=>{const l=e.target.closest('[data-load]'),d=e.target.closest('[data-setdel]'),c=e.target.closest('[data-setcopy]');if(l){state.activeSet=l.dataset.load;persist();render();switchTab('builder')}if(c){const source=state.sets.find(x=>x.id===c.dataset.setcopy);if(source){const clone={...JSON.parse(JSON.stringify(source)),id:uid(),name:source.name+' — копия',cloudId:null,publicId:null,isPublic:false,actions:source.actions.map(a=>({...a,id:uid()}))};state.sets.push(clone);state.activeSet=clone.id;persist();render();switchTab('builder');toast('Копия набора создана. Сохрани её в облако для отдельной ссылки Overlay.')}}if(d&&confirm('Удалить этот набор?')){state.sets=state.sets.filter(s=>s.id!==d.dataset.setdel);if(state.activeSet===d.dataset.setdel)state.activeSet=state.sets[0].id;persist();render()}};
+$('setList').onclick=e=>{
+ const l=e.target.closest('[data-load]'),d=e.target.closest('[data-setdel]'),c=e.target.closest('[data-setcopy]');
+ if(l){
+   const target=state.sets.find(x=>x.id===l.dataset.load);
+   if(target){
+     state.activeSet=target.id;
+     persist();
+     render();
+     switchTab('builder');
+     window.scrollTo({top:0,behavior:'smooth'});
+     toast('Открыт набор: '+target.name);
+   }
+ }
+ if(c){
+   const source=state.sets.find(x=>x.id===c.dataset.setcopy);
+   if(source){
+     const clone={...JSON.parse(JSON.stringify(source)),id:uid(),name:source.name+' — копия',cloudId:null,publicId:null,isPublic:false,actions:source.actions.map(a=>({...a,id:uid()}))};
+     state.sets.push(clone);state.activeSet=clone.id;persist();render();switchTab('builder');
+     window.scrollTo({top:0,behavior:'smooth'});
+     toast('Копия набора создана. Сохрани её в облако для отдельной ссылки Overlay.');
+   }
+ }
+ if(d&&confirm('Удалить этот набор?')){
+   state.sets=state.sets.filter(s=>s.id!==d.dataset.setdel);
+   if(state.activeSet===d.dataset.setdel)state.activeSet=state.sets[0].id;
+   persist();render();
+ }
+};
 $('exportBtn').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.href=u;a.download='gift-actions.json';a.click();URL.revokeObjectURL(u)};
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!Array.isArray(x.sets))throw Error();state=x;persist();render();toast('Наборы импортированы')}catch{alert('Не удалось импортировать файл')}e.target.value=''};
 $('refreshPreview').onclick=()=>{renderTicker();toast('Предпросмотр обновлён')};
