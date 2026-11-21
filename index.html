@@ -80,6 +80,55 @@ body.overlay .overlaypage .tickerwrap{width:100vw!important;max-width:1080px!imp
 .giftcard .tools button{min-width:28px;padding:5px 7px}
 .giftcard .tools button:disabled{opacity:.3;cursor:not-allowed}
 
+
+/* v14: keep gift description readable while retaining reorder controls */
+.giftlist{grid-template-columns:repeat(auto-fill,minmax(min(285px,100%),1fr))}
+.giftcard{
+  display:grid!important;
+  grid-template-columns:58px minmax(0,1fr) 68px!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-width:0!important;
+}
+.giftcard>img{width:58px!important;height:58px!important;min-width:0}
+.giftcard .detail{
+  min-width:0!important;
+  width:auto!important;
+  flex:initial!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+.giftcard .detail strong,
+.giftcard .detail .action{
+  overflow-wrap:break-word!important;
+  word-break:normal!important;
+  hyphens:auto;
+  white-space:normal;
+}
+.giftcard .tools{
+  display:grid!important;
+  grid-template-columns:repeat(2,28px)!important;
+  grid-auto-rows:30px;
+  justify-content:end!important;
+  align-content:center!important;
+  gap:5px!important;
+  width:61px!important;
+  max-width:61px!important;
+  min-width:61px!important;
+  flex:none!important;
+}
+.giftcard .tools button{
+  box-sizing:border-box;
+  width:28px!important;
+  min-width:28px!important;
+  height:30px!important;
+  padding:3px!important;
+  line-height:1!important;
+}
+@media(max-width:420px){
+  .giftlist{grid-template-columns:minmax(0,1fr)!important}
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div></header>
