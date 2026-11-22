@@ -480,6 +480,59 @@ body.panel-cards .action-panel-color-setting{display:block}
 .pro-locked{opacity:.68}
 #adminPanel{border-color:#8057a5}
 #adminPanel .danger{border-color:#75424a}
+
+
+/* v49: Dynamic List orientation and content-sized preview */
+#app .preview:has(.ticker.rotator-host){
+  height:auto!important;max-height:none!important;overflow:visible!important;
+}
+#app .preview .tickerwrap:has(.ticker.rotator-host){
+  display:block!important;height:auto!important;min-height:0!important;
+  max-height:none!important;overflow:visible!important;contain:none!important;
+}
+#app .preview .ticker.rotator-host{
+  display:block!important;height:auto!important;min-height:0!important;
+  max-height:none!important;overflow:visible!important;
+}
+#app .preview .ticker.rotator-host .rotator-stage{
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:visible!important;
+}
+#app.vertical-overlay .preview .ticker.rotator-host .rotator-stage,
+body.vertical-overlay #app .preview .ticker.rotator-host .rotator-stage{
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;height:auto!important;max-height:none!important;
+  overflow:visible!important;
+}
+body.overlay.vertical-overlay .overlaypage{
+  align-items:center!important;justify-content:center!important;
+}
+body.overlay.vertical-overlay .tickerwrap{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100vw!important;height:100vh!important;max-height:100vh!important;
+  overflow:hidden!important;box-sizing:border-box;
+}
+body.overlay.vertical-overlay .ticker.rotator-host{
+  display:block!important;width:100%!important;height:auto!important;
+  min-width:0!important;max-width:100%!important;max-height:100vh!important;
+  overflow:hidden!important;animation:none!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage{
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  max-height:calc(100vh - 32px)!important;overflow:visible!important;
+  box-sizing:border-box;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile{
+  display:flex!important;flex:0 0 auto!important;width:auto!important;
+  max-width:100%!important;min-width:0!important;overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile.graphic-tile{
+  width:var(--panel-width,150px)!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -803,32 +856,56 @@ function fillTicker(el,items){
    parser.innerHTML=items;
    const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
    const vertical=state.settings.overlayOrientation==='vertical';
-   const perRow=vertical?1:Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
+   const perPage=Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
    const pages=[];
-   for(let i=0;i<cards.length;i+=perRow)pages.push(cards.slice(i,i+perRow).map(node=>node.outerHTML).join(''));
+   for(let i=0;i<cards.length;i+=perPage)pages.push(cards.slice(i,i+perPage).map(node=>node.outerHTML).join(''));
    if(!pages.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
    el.className='ticker rotator-host';
    el.style.width='100%';el.style.minWidth='0';el.style.maxWidth='100%';
-   el.style.setProperty('--row-count',perRow);
+   el.style.height='auto';el.style.maxHeight='none';el.style.overflow='visible';
+   el.style.setProperty('--row-count',perPage);
    const rotatorCardWidth=state.settings.cardStyle==='graphic'
      ? (Number(state.settings.panelWidth)||150)
      : Math.max((Number(state.settings.iconSize)||64)+20,100);
    el.style.setProperty('--rotator-card-width',rotatorCardWidth+'px');
    const showPage=(index)=>{
+     const mountStage=()=>{
+       el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
+       const stage=el.querySelector('.rotator-stage');
+       if(!stage)return;
+       if(vertical){
+         stage.style.display='flex';
+         stage.style.flexDirection='column';
+         stage.style.flexWrap='nowrap';
+         stage.style.alignItems='center';
+         stage.style.justifyContent='flex-start';
+         stage.style.width='100%';
+         stage.style.height='auto';
+         stage.style.maxHeight='none';
+         stage.style.minHeight='0';
+         stage.style.overflow='visible';
+         stage.querySelectorAll('.tile').forEach(tile=>{
+           tile.style.flex='0 0 auto';
+           tile.style.width=state.settings.cardStyle==='graphic'
+             ? (Number(state.settings.panelWidth)||150)+'px'
+             : 'auto';
+           tile.style.maxWidth='100%';
+           tile.style.minWidth='0';
+           tile.style.overflow='visible';
+         });
+       }else{
+         stage.style.display='grid';
+         stage.style.gridTemplateColumns=`repeat(${perPage},minmax(0,1fr))`;
+         stage.style.width='100%';
+         stage.style.height='auto';
+       }
+       requestAnimationFrame(()=>requestAnimationFrame(()=>stage.classList.remove('is-fading')));
+     };
      const old=el.querySelector('.rotator-stage');
      if(old){
        old.classList.add('is-fading');
-       setTimeout(()=>{
-         if(!el.isConnected)return;
-         el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
-         const next=el.querySelector('.rotator-stage');
-         requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.remove('is-fading')));
-       },1150);
-     }else{
-       el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
-       const first=el.querySelector('.rotator-stage');
-       requestAnimationFrame(()=>requestAnimationFrame(()=>first.classList.remove('is-fading')));
-     }
+       setTimeout(()=>{if(el.isConnected)mountStage()},1150);
+     }else mountStage();
    };
    let page=0;showPage(page);
    if(pages.length>1){
