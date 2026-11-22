@@ -341,6 +341,49 @@ body.overlay .ticker.rotator-host .rotator-stage .tile b{
   line-height:1.25!important;
 }
 
+
+/* v33: rotator row width is content-driven, not clipped by overlay viewport */
+body.overlay .overlaypage:has(.ticker.rotator-host),
+body.overlay .overlaypage:has(.ticker.rotator-host) .tickerwrap,
+#app .preview:has(.ticker.rotator-host),
+#app .preview:has(.ticker.rotator-host) .tickerwrap{
+  overflow:visible!important;
+}
+body.overlay .overlaypage:has(.ticker.rotator-host) .tickerwrap,
+#app .preview:has(.ticker.rotator-host) .tickerwrap{
+  width:max-content!important;
+  max-width:none!important;
+  min-width:0!important;
+  flex:0 0 auto!important;
+}
+#app .ticker.rotator-host,
+body.overlay .ticker.rotator-host{
+  display:block!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  overflow:visible!important;
+}
+#app .ticker.rotator-host .rotator-stage,
+body.overlay .ticker.rotator-host .rotator-stage{
+  display:grid!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  grid-template-columns:repeat(var(--row-count,5),var(--rotator-card-width,100px))!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:var(--rotator-card-width,100px)!important;
+  justify-content:start!important;
+  overflow:visible!important;
+}
+#app .ticker.rotator-host .rotator-stage .tile,
+body.overlay .ticker.rotator-host .rotator-stage .tile{
+  width:var(--rotator-card-width,100px)!important;
+  min-width:var(--rotator-card-width,100px)!important;
+  max-width:var(--rotator-card-width,100px)!important;
+  overflow:visible!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
