@@ -533,6 +533,50 @@ body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile.graphic-
   width:var(--panel-width,150px)!important;
 }
 
+
+/* v50: force vertical layout in the published/live overlay.
+   Keep these rules last in the stylesheet to override older horizontal rotator rules. */
+body.overlay.vertical-overlay .overlaypage:has(.ticker.rotator-host){
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  width:100vw!important;height:100vh!important;
+  max-width:1080px!important;max-height:1920px!important;
+  overflow:hidden!important;
+}
+body.overlay.vertical-overlay .overlaypage:has(.ticker.rotator-host) .tickerwrap{
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  width:100vw!important;height:100vh!important;
+  max-width:1080px!important;max-height:1920px!important;
+  min-width:0!important;min-height:0!important;
+  overflow:hidden!important;box-sizing:border-box!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host{
+  display:block!important;flex:0 1 auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:100vh!important;
+  white-space:normal!important;overflow:hidden!important;
+  animation:none!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage{
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:calc(100vh - 32px)!important;
+  grid-template-columns:none!important;grid-auto-flow:row!important;
+  grid-auto-columns:auto!important;overflow:visible!important;
+  box-sizing:border-box!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile{
+  display:flex!important;flex:0 0 auto!important;
+  width:auto!important;min-width:0!important;max-width:100%!important;
+  overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile.graphic-tile{
+  width:var(--panel-width,150px)!important;min-width:var(--panel-width,150px)!important;
+  max-width:100%!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
