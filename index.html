@@ -620,9 +620,10 @@ body.vertical-overlay.ticker-selected #app .preview{
 }
 
 
-/* v56: independently adjustable caption vertical position */
-#app .tile>b, body.overlay .tile>b{
-  transform:translateY(calc(0px - var(--text-offset,0px)))!important;
+/* v57: move graphic-card captions vertically without breaking their horizontal centering */
+#app .tile.graphic-tile>b, body.overlay .tile.graphic-tile>b{
+  left:50%!important;
+  transform:translate(-50%, calc(0px - var(--text-offset,0px)))!important;
 }
 
 </style></head><body>
