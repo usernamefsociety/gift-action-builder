@@ -601,42 +601,7 @@ body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage>.tile{
 }
 
 
-/* v46: keep portrait ticker preview compact and make rotator orientation explicit */
-#app .preview .tickerwrap{
- height:220px!important;max-height:220px!important;min-height:220px!important;
- overflow:hidden!important;contain:layout paint!important;
-}
-#app .preview .tickerwrap .ticker{
- max-height:220px!important;
-}
-#app.vertical-overlay .preview .tickerwrap,
-body.vertical-overlay #app .preview .tickerwrap{
- height:220px!important;max-height:220px!important;min-height:220px!important;
-}
-#app.vertical-overlay .preview .ticker.rotator-host,
-body.vertical-overlay #app .preview .ticker.rotator-host{
- height:220px!important;max-height:220px!important;min-height:220px!important;
- display:block!important;overflow:hidden!important;
-}
-#app.vertical-overlay .preview .ticker.rotator-host .rotator-stage,
-body.vertical-overlay #app .preview .ticker.rotator-host .rotator-stage{
- display:flex!important;flex-flow:column nowrap!important;
- align-items:center!important;justify-content:flex-start!important;
- width:100%!important;height:auto!important;min-height:0!important;
- max-height:none!important;gap:var(--gap,22px)!important;
-}
-#app.vertical-overlay .preview .ticker.rotator-host .rotator-stage .tile,
-body.vertical-overlay #app .preview .ticker.rotator-host .rotator-stage .tile{
- width:auto!important;max-width:100%!important;min-width:0!important;
- flex:0 0 auto!important;overflow:visible!important;
-}
-body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage{
- display:flex!important;flex-flow:column nowrap!important;
- align-items:center!important;justify-content:flex-start!important;
-}
-body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile{
- width:auto!important;max-width:100%!important;flex:0 0 auto!important;
-}
+
 
 </style></head><body>
 <div id="app" class="app">
