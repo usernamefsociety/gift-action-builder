@@ -240,7 +240,7 @@ body.grid-selected .non-grid-spacing{display:none}
  display:grid!important;width:100%!important;min-width:0!important;max-width:100%!important;
  grid-template-columns:repeat(var(--grid-columns,5),minmax(0,1fr))!important;
  grid-auto-rows:max-content;align-items:start;justify-items:center;align-content:start;
- column-gap:var(--grid-column-gap,22px)!important;row-gap:var(--grid-row-gap,22px)!important;gap:normal!important;padding:12px;box-sizing:border-box;
+ column-gap:var(--grid-column-gap,22px)!important;row-gap:var(--grid-row-gap,22px)!important;padding:12px;box-sizing:border-box;
  white-space:normal!important;overflow:visible!important;animation:none!important;
 }
 #app .ticker.grid-host .tile,body.overlay .ticker.grid-host .tile{width:100%;min-width:0;max-width:100%;overflow:visible}
@@ -382,6 +382,17 @@ body.overlay .ticker.rotator-host .rotator-stage .tile{
   min-width:var(--rotator-card-width,100px)!important;
   max-width:var(--rotator-card-width,100px)!important;
   overflow:visible!important;
+}
+
+
+/* v34: grid spacing controls — keep independent row and column gaps */
+#app .ticker.grid-host,
+body.overlay .ticker.grid-host{
+  display:grid!important;
+  column-gap:var(--grid-column-gap,22px)!important;
+  grid-column-gap:var(--grid-column-gap,22px)!important;
+  row-gap:var(--grid-row-gap,22px)!important;
+  grid-row-gap:var(--grid-row-gap,22px)!important;
 }
 
 </style></head><body>
