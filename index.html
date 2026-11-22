@@ -433,33 +433,40 @@ body.overlay .ticker.grid-host .tile.graphic-tile{
 .action-panel-color-setting{display:none}
 body.graphic-cards .action-panel-color-setting{display:block}
 
+
+/* v37: compact footer feedback link */
+.feedback-footer{display:flex;justify-content:center;padding:0 16px 28px}
+.feedback-footer a{display:inline-flex;align-items:center;gap:9px;padding:10px 16px;border:1px solid #684a86;border-radius:12px;background:#21172e;color:#e9d8ff;text-decoration:none;font-weight:600;transition:background .18s,border-color .18s}
+.feedback-footer a:hover{background:#30203f;border-color:#a56be0}
+.feedback-footer a span{font-size:18px;line-height:1}
+
 </style></head><body>
 <div id="app" class="app">
-<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
-<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button></div><div class="hint">КАТАЛОГ ИЗ ВАШИХ АРХИВОВ · 1 115 ИКОНОК</div></aside>
+<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
+<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button></div><div class="hint"></div></aside>
 <main class="main">
 <section class="panel" id="accountPanel"><div class="panelhead"><div><h2>Облачный аккаунт</h2><div class="sub" id="authStatus">Войди или зарегистрируйся, чтобы сохранять наборы в облаке</div></div><span class="pill" id="cloudBadge">Локальный режим</span></div><div class="formgrid"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Пароль</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 8 символов"></div></div><div class="actions" style="margin-top:12px"><button class="primary" id="signInBtn">Войти</button><button id="signUpBtn">Создать аккаунт</button><button id="signOutBtn" class="hidden">Выйти</button><button id="cloudLoadBtn" class="hidden">Загрузить мои наборы</button></div><div class="sub" style="margin-top:9px">Локальная копия остаётся в этом браузере. Для облачной синхронизации войди в аккаунт.</div></section>
 <section id="builder" class="tab">
-<div class="panel"><div class="panelhead"><div><h2>Текущий набор</h2><div class="sub">Выбирай существующий подарок TikTok и вписывай, какое игровое действие он запускает</div></div><span class="pill" id="giftCount">0 действий</span></div><div class="row"><div class="grow"><label>Название набора</label><input id="setName" value="Мои игровые действия"></div><div class="actions" style="margin-top:20px"><button id="saveSet" class="hidden">Сохранить локально</button><button id="cloudSaveBtn" class="primary save-main">Сохранить</button><button id="publishBtn" class="hidden">Опубликовать Overlay</button></div></div></div>
-<div class="panel"><div class="panelhead"><div><h2>Действия за подарки</h2><div class="sub">Каждая карточка — выбранный подарок и подпись действия под его иконкой</div></div><button id="addAction" class="primary">＋ Добавить действие</button></div><div id="actionList" class="giftlist"></div></div>
+<div class="panel"><div class="panelhead"><div><h2>Текущий набор</h2></div><span class="pill" id="giftCount">0 действий</span></div><div class="row"><div class="grow"><label>Название набора</label><input id="setName" value="Мои игровые действия"></div><div class="actions" style="margin-top:20px"><button id="saveSet" class="hidden">Сохранить локально</button><button id="cloudSaveBtn" class="primary save-main">Сохранить</button><button id="publishBtn" class="hidden">Опубликовать Overlay</button></div></div></div>
+<div class="panel"><div class="panelhead"><div><h2>Карточки</h2></div><button id="addAction" class="primary">＋ Добавить действие</button></div><div id="actionList" class="giftlist"></div></div>
 
 <div class="panel" id="tickerSettingsPanel">
   <div class="panelhead">
-    <div><h2>Оформление Overlay</h2><div class="sub">Настрой внешний вид здесь — предпросмотр обновляется сразу, а сохранение применяет настройки к Overlay</div></div>
+    <div><h2>Оформление Overlay</h2></div>
   </div>
   <div class="formgrid">
     <div class="field"><label>Стиль Overlay</label><select id="overlayStyle"><option value="ticker">Бегущая строка</option><option value="rotator">Меняющийся перечень</option><option value="grid">Сетка</option></select></div>
     <div class="field"><label>Стиль карточек</label><select id="cardStyle"><option value="standard">Стандартный</option><option value="graphic">Графический</option></select></div>
     <div class="field graphic-setting"><label>Цвет стеклянной панели</label><div class="row"><input id="panelColor" type="color" value="#6d83ff" style="width:58px;height:42px;padding:4px"><span class="sub">Меняет оттенок панели, сохраняя блики и неоновые грани</span></div></div>
-    <div class="field"><label>Размер иконки: <b class="rangeval" id="iconVal">64 px</b></label><input id="iconSize" type="range" min="24" max="150" value="64"></div>
+    <div class="field"><label>Размер иконки подарка: <b class="rangeval" id="iconVal">64 px</b></label><input id="iconSize" type="range" min="24" max="150" value="64"></div>
     <div class="field graphic-setting"><label>Ширина бокса: <b class="rangeval" id="panelWidthVal">150 px</b></label><input id="panelWidth" type="range" min="90" max="280" value="150"></div>
     <div class="field graphic-setting"><label>Высота бокса: <b class="rangeval" id="panelHeightVal">126 px</b></label><input id="panelHeight" type="range" min="80" max="240" value="126"></div>
     <div class="field"><label>Шрифт подписей</label><select id="fontFamily"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
     <div class="field"><label>Размер подписи: <b class="rangeval" id="textVal">12 px</b></label><input id="textSize" type="range" min="8" max="32" value="12"></div>
     <div class="field"><label>Чёрная обводка текста</label><select id="textOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
     <div class="field ticker-speed-setting"><label>Скорость строки: <b class="rangeval" id="speedVal">28 сек</b></label><input id="speed" type="range" min="5" max="120" value="28"></div>
-    <div class="field non-grid-spacing"><label>Расстояние между подарками: <b class="rangeval" id="gapVal">22 px</b></label><input id="spacing" type="range" min="0" max="100" value="22"></div>
-    <div class="field rotator-setting"><label>Подарков-действий в ряду: <b class="rangeval" id="rowCountVal">5</b></label><input id="rowCount" type="range" min="1" max="9" value="5"></div>
+    <div class="field non-grid-spacing"><label>Расстояние между карточками: <b class="rangeval" id="gapVal">22 px</b></label><input id="spacing" type="range" min="0" max="100" value="22"></div>
+    <div class="field rotator-setting"><label>Карточек в ряду: <b class="rangeval" id="rowCountVal">5</b></label><input id="rowCount" type="range" min="1" max="9" value="5"></div>
     <div class="field rotator-setting"><label>Длительность показа строки: <b class="rangeval" id="rowDurationVal">5 сек</b></label><input id="rowDuration" type="range" min="2" max="30" value="5"></div>
     <div class="field grid-setting"><label>Количество столбцов: <b class="rangeval" id="gridColumnsVal">5</b></label><input id="gridColumns" type="range" min="1" max="12" value="5"></div>
     <div class="field grid-setting"><label>Расстояние между столбцами: <b class="rangeval" id="gridColumnGapVal">22 px</b></label><input id="gridColumnGap" type="range" min="0" max="120" value="22"></div>
@@ -470,7 +477,7 @@ body.graphic-cards .action-panel-color-setting{display:block}
     <button id="copyOverlay">Скопировать ссылку Overlay</button>
     <button id="openOverlay">Открыть Overlay</button>
   </div>
-  <div class="notice" style="margin-top:12px">Настройки сначала применяются к предпросмотру. Нажми «Сохранить изменения», чтобы записать их и обновить публичный Overlay. Для OBS используй скопированную публичную ссылку.</div>
+  <div class="notice" style="margin-top:12px">Настройки сначала применяются к предпросмотру. Нажми «Сохранить изменения», чтобы записать их и обновить Overlay. Для OBS/TikTok Live Studio используй скопированную ссылку.</div>
 </div>
 
 <div class="panel"><div class="panelhead"><div><h2>Предпросмотр Overlay</h2><div class="sub">Предпросмотр выбранного стиля отображения подарков-действий</div></div><button id="refreshPreview">Обновить</button></div><div class="preview"><div class="previewlabel">GIFT ACTIONS · LIVE</div><div class="tickerwrap"><div id="previewTicker" class="ticker"></div></div></div></div>
@@ -478,7 +485,8 @@ body.graphic-cards .action-panel-color-setting{display:block}
 </section>
 <section id="sets" class="tab hidden"><div class="panel"><div class="panelhead"><div><h2>Мои наборы</h2><div class="sub">Отдельные наборы действий для разных игр</div></div><button id="newSet" class="primary">＋ Новый набор</button></div><div id="setList"></div><div class="actions" style="margin-top:14px"><button id="exportBtn">Экспорт JSON</button><button id="importBtn">Импорт JSON</button><input id="importFile" type="file" accept="application/json" class="hidden"></div></div></section>
 
-<div class="footer">Gift Action Builder · 1 115 иконок · цены по каталогу StreamToEarn для Украины (7 июля 2026)</div>
+<div class="footer">Gift Action Builder</div>
+<div class="feedback-footer"><a href="https://t.me/username_fsociety_tt" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✈</span> Обратная связь в Telegram</a></div>
 </main></div></div><div class="toast" id="toast"></div>
 <dialog id="actionDialog" class="catalogmodal"><div class="modalhead"><div><b id="dialogTitle">Добавить действие</b><div class="sub">Сначала выбери подарок из каталога TikTok</div></div><button id="closeDialog">✕</button></div><div class="modalbody">
 <div id="giftSelectStep"><label>Поиск подарка по названию</label><input id="catalogSearch" placeholder="Начни вводить название подарка…"><div class="row" style="margin-top:10px"><label style="margin:0;white-space:nowrap">Сортировка</label><select id="catalogSort" style="max-width:260px"><option value="priceAsc" selected>От дешёвых к дорогим</option><option value="name">По алфавиту</option><option value="priceDesc">Сначала дорогие</option></select></div><div class="sub" id="catalogCount" style="margin-top:6px">В каталоге 1 115 подарков</div><div class="cataloggrid" id="catalogGrid"></div></div>
