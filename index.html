@@ -585,7 +585,40 @@ async function cloudSaveActive(show=true){
  if(!currentUser||cloudBusy)return;
  const set=active();if(!set)return;
  if(cloudSetLimitReached(set)){if(show)toast('FREE позволяет хранить только 1 набор в облаке. Для дополнительных наборов нужен PRO.');return false}
- cloudBusy=true;try{const id=set.cloudId||crypto.randomUUID();const duplicatePublicId=set.publicId&&state.sets.some(other=>other.id!==set.id&&other.publicId===set.publicId);const publicId=(!set.publicId||duplicatePublicId)?crypto.randomUUID():set.publicId;const payload={id,public_id:publicId,owner_id:currentUser.id,title:set.name,game:set.game||'',config:cloudConfig(set),is_public:!!set.isPublic,updated_at:new Date().toISOString()};const {data: saved,error}=await db.from('gift_sets').upsert(payload,{onConflict:'id'}).select('public_id').single();if(error)throw error;set.cloudId=id;set.publicId=saved.public_id||publicId;localStorage.setItem(STORE,JSON.stringify(state));if(show)toast('Набор сохранён в облаке');return true}catch(e){console.error(e);if(show)toast('Ошибка облачного сохранения: '+(e.message||e));return false}finally{cloudBusy=false}}
+ cloudBusy=true;
+ try{
+  let id=set.cloudId||null;
+  let existingPublicId=set.publicId||null;
+  // Reconcile a local copy with the user's existing cloud record before INSERT.
+  // This avoids treating an already-owned single set as a second FREE set.
+  if(!id){
+   const {data:owned,error:lookupError}=await db.from('gift_sets')
+    .select('id,public_id,title').eq('owner_id',currentUser.id)
+    .order('updated_at',{ascending:false}).limit(2);
+   if(lookupError)throw lookupError;
+   if(owned?.length===1){
+    id=owned[0].id;
+    existingPublicId=owned[0].public_id||existingPublicId;
+    set.cloudId=id;
+    set.publicId=existingPublicId;
+    localStorage.setItem(STORE,JSON.stringify(state));
+   }else if(owned?.length>1&&!isPro()){
+    throw new Error('В облаке уже найдено несколько наборов. Загрузи существующие наборы из облака и выбери нужный для редактирования.');
+   }
+  }
+  id=id||crypto.randomUUID();
+  const duplicatePublicId=existingPublicId&&state.sets.some(other=>other.id!==set.id&&other.publicId===existingPublicId);
+  const publicId=(!existingPublicId||duplicatePublicId)?crypto.randomUUID():existingPublicId;
+  const payload={id,public_id:publicId,owner_id:currentUser.id,title:set.name,game:set.game||'',config:cloudConfig(set),is_public:!!set.isPublic,updated_at:new Date().toISOString()};
+  const {data:saved,error}=await db.from('gift_sets').upsert(payload,{onConflict:'id'}).select('public_id').single();
+  if(error)throw error;
+  set.cloudId=id;set.publicId=saved.public_id||publicId;
+  localStorage.setItem(STORE,JSON.stringify(state));
+  if(show)toast('Набор сохранён в облаке');
+  return true;
+ }catch(e){console.error(e);if(show)toast('Ошибка облачного сохранения: '+(e.message||e));return false}
+ finally{cloudBusy=false}
+}
 function authUi(user){
  currentUser=user;
  $('authStatus').textContent=user?'Вход выполнен: '+user.email:'Войди или зарегистрируйся, чтобы сохранять наборы в облаке';
