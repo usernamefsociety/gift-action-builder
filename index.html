@@ -589,29 +589,60 @@ async function cloudSaveActive(show=true){
  try{
   let id=set.cloudId||null;
   let existingPublicId=set.publicId||null;
-  // Reconcile a local copy with the user's existing cloud record before INSERT.
-  // This avoids treating an already-owned single set as a second FREE set.
-  if(!id){
-   const {data:owned,error:lookupError}=await db.from('gift_sets')
-    .select('id,public_id,title').eq('owner_id',currentUser.id)
-    .order('updated_at',{ascending:false}).limit(2);
-   if(lookupError)throw lookupError;
+
+  // Always reconcile FREE accounts against the server before saving.
+  // If one cloud set exists, explicitly UPDATE that row instead of UPSERT/INSERT.
+  const {data:owned,error:lookupError}=await db.from('gift_sets')
+   .select('id,public_id,title').eq('owner_id',currentUser.id)
+   .order('updated_at',{ascending:false}).limit(2);
+  if(lookupError)throw lookupError;
+
+  let forceUpdate=false;
+  if(!isPro()){
    if(owned?.length===1){
     id=owned[0].id;
     existingPublicId=owned[0].public_id||existingPublicId;
     set.cloudId=id;
     set.publicId=existingPublicId;
-    localStorage.setItem(STORE,JSON.stringify(state));
-   }else if(owned?.length>1&&!isPro()){
-    throw new Error('В облаке уже найдено несколько наборов. Загрузи существующие наборы из облака и выбери нужный для редактирования.');
+    forceUpdate=true;
+   }else if(owned?.length>1){
+    const matching=owned.find(row=>row.id===set.cloudId);
+    if(!matching){
+     throw new Error('В облаке найдено несколько наборов. Сначала загрузи наборы из облака и выбери нужный для редактирования.');
+    }
+    id=matching.id;
+    existingPublicId=matching.public_id||existingPublicId;
+    forceUpdate=true;
    }
+  }else if(!id&&owned?.length===1){
+   // For PRO, attach automatically only when there is a single unambiguous cloud set.
+   id=owned[0].id;
+   existingPublicId=owned[0].public_id||existingPublicId;
+   set.cloudId=id;
+   set.publicId=existingPublicId;
   }
+
   id=id||crypto.randomUUID();
   const duplicatePublicId=existingPublicId&&state.sets.some(other=>other.id!==set.id&&other.publicId===existingPublicId);
   const publicId=(!existingPublicId||duplicatePublicId)?crypto.randomUUID():existingPublicId;
   const payload={id,public_id:publicId,owner_id:currentUser.id,title:set.name,game:set.game||'',config:cloudConfig(set),is_public:!!set.isPublic,updated_at:new Date().toISOString()};
-  const {data:saved,error}=await db.from('gift_sets').upsert(payload,{onConflict:'id'}).select('public_id').single();
+
+  let saved=null;
+  let error=null;
+  if(forceUpdate){
+   const result=await db.from('gift_sets').update(payload)
+    .eq('id',id).eq('owner_id',currentUser.id)
+    .select('public_id').single();
+   saved=result.data;
+   error=result.error;
+  }else{
+   const result=await db.from('gift_sets').upsert(payload,{onConflict:'id'})
+    .select('public_id').single();
+   saved=result.data;
+   error=result.error;
+  }
   if(error)throw error;
+  if(!saved)throw new Error('Облачный набор не найден для обновления. Нажми «Загрузить из облака» и повтори сохранение.');
   set.cloudId=id;set.publicId=saved.public_id||publicId;
   localStorage.setItem(STORE,JSON.stringify(state));
   if(show)toast('Набор сохранён в облаке');
