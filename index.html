@@ -1046,7 +1046,7 @@ function fillTicker(el,items){
 function renderTicker(){const el=$('previewTicker');fillTicker(el,tickerMarkup())}
 window.addEventListener('resize',()=>{if(!document.body.classList.contains('overlay'))renderTicker()});
 function panelHue(hex){const m=/^#([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 0;const n=parseInt(m[1],16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0;if(d){if(max===r)h=60*(((g-b)/d)%6);else if(max===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4)}if(h<0)h+=360;return Math.round(h-225)}
-function applyStyle(el){el.style.setProperty('--panel-hue',panelHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--panel-width',(state.settings.panelWidth||150)+'px');el.style.setProperty('--panel-height',(state.settings.panelHeight||126)+'px');el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--text-offset',(Number(state.settings.textOffset)||0)+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
+function applyStyle(el){el.style.setProperty('--panel-hue',panelHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--panel-width',(state.settings.panelWidth||150)+'px');el.style.setProperty('--panel-height',(state.settings.panelHeight||126)+'px');el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--text-offset',(Number(state.settings.textOffset)||0)+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--rotator-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-columns',Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5)));el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
 function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" onclick="window.openSavedSet(decodeURIComponent('${encodeURIComponent(s.id)}'))" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
 function switchTab(id){if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
 window.openSavedSet = function(id){
@@ -1112,27 +1112,45 @@ $('exportBtn').onclick=()=>{const a=document.createElement('a'),u=URL.createObje
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!Array.isArray(x.sets))throw Error();state=x;persist();render();toast('Наборы импортированы')}catch{alert('Не удалось импортировать файл')}e.target.value=''};
 $('refreshPreview').onclick=()=>{renderTicker();toast('Предпросмотр обновлён')};
 function syncControls(){applyPlanLocks();for(const [id,key,suffix] of [['iconSize','iconSize',' px'],['textSize','textSize',' px'],['textOffset','textOffset',' px'],['speed','speed',' сек'],['spacing','spacing',' px'],['rowCount','rowCount',''],['rowDuration','rowDuration',' сек'],['panelWidth','panelWidth',' px'],['panelHeight','panelHeight',' px'],['gridColumns','gridColumns',''],['gridColumnGap','gridColumnGap',' px'],['gridRowGap','gridRowGap',' px']]){if($(id)){$(id).value=state.settings[key]??({textOffset:0,rowCount:5,rowDuration:5,panelWidth:150,panelHeight:126,gridColumns:5,gridColumnGap:22,gridRowGap:22}[key]??0);const label={iconSize:'iconVal',textSize:'textVal',textOffset:'textOffsetVal',speed:'speedVal',spacing:'gapVal',rowCount:'rowCountVal',rowDuration:'rowDurationVal',panelWidth:'panelWidthVal',panelHeight:'panelHeightVal',gridColumns:'gridColumnsVal',gridColumnGap:'gridColumnGapVal',gridRowGap:'gridRowGapVal'}[id];if($(label))$(label).textContent=$(id).value+suffix}}$('fontFamily').value=state.settings.fontFamily||'Inter, sans-serif';$('textOutline').value=String(state.settings.textOutline||0);$('overlayStyle').value=state.settings.overlayStyle||'ticker';if($('overlayOrientation'))$('overlayOrientation').value=state.settings.overlayOrientation||'horizontal';$('cardStyle').value=state.settings.cardStyle||'standard';$('panelColor').value=state.settings.panelColor||'#6d83ff';document.body.classList.toggle('rotator-selected',state.settings.overlayStyle==='rotator');document.body.classList.toggle('grid-selected',state.settings.overlayStyle==='grid');document.body.classList.toggle('ticker-selected',state.settings.overlayStyle==='ticker');document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic');document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='neon')}
-function previewSettingsFromControls(){
- for(const id of ['iconSize','textSize','textOffset','speed','spacing','rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'])state.settings[id]=+$(id).value;
+// Lightweight preview updates: visual sliders only touch CSS variables on existing DOM.
+let previewFrame=0, previewNeedsRebuild=false;
+function readPreviewControls(){
+ const numeric=['iconSize','textSize','textOffset','speed','spacing','rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'];
+ for(const id of numeric)state.settings[id]=+$(id).value;
  state.settings.fontFamily=$('fontFamily').value;
  state.settings.textOutline=+$('textOutline').value;
  state.settings.overlayStyle=$('overlayStyle').value;
  state.settings.overlayOrientation=$('overlayOrientation')?.value||'horizontal';
  state.settings.cardStyle=$('cardStyle').value;
  state.settings.panelColor=$('panelColor').value;
- syncControls();
- applyStyle($('previewTicker'));
 }
-for(const id of ['iconSize','textSize','textOffset','speed','spacing'])$(id).oninput=()=>{previewSettingsFromControls();renderTicker()};
-$('fontFamily').onchange=()=>{previewSettingsFromControls();renderTicker()};
-$('textOutline').onchange=()=>{previewSettingsFromControls();renderTicker()};
-
-$('overlayStyle').onchange=()=>{if(!isPro()&&$('overlayStyle').value==='rotator'){$('overlayStyle').value='ticker';toast('Динамический список доступен только в PRO')}previewSettingsFromControls();renderTicker()};
-$('overlayOrientation').onchange=()=>{previewSettingsFromControls();renderTicker()};
-$('cardStyle').onchange=()=>{if(!isPro()&&$('cardStyle').value==='graphic'){$('cardStyle').value='standard';toast('Жидкое Стекло доступно только в PRO')}previewSettingsFromControls();renderTicker()};
-$('panelColor').oninput=()=>{previewSettingsFromControls();renderTicker()};
-
-for(const id of ['rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'])$(id).oninput=()=>{previewSettingsFromControls();renderTicker()};
+function updatePreviewLabels(){
+ const pairs=[['iconSize','iconVal',' px'],['textSize','textVal',' px'],['textOffset','textOffsetVal',' px'],['speed','speedVal',' сек'],['spacing','gapVal',' px'],['rowCount','rowCountVal',''],['rowDuration','rowDurationVal',' сек'],['panelWidth','panelWidthVal',' px'],['panelHeight','panelHeightVal',' px'],['gridColumns','gridColumnsVal',''],['gridColumnGap','gridColumnGapVal',' px'],['gridRowGap','gridRowGapVal',' px']];
+ for(const [input,label,suffix] of pairs)if($(label))$(label).textContent=$(input).value+suffix;
+}
+function schedulePreview(rebuild=false){
+ previewNeedsRebuild=previewNeedsRebuild||rebuild;
+ if(previewFrame)return;
+ previewFrame=requestAnimationFrame(()=>{
+   previewFrame=0;
+   readPreviewControls();
+   updatePreviewLabels();
+   const el=$('previewTicker');
+   if(previewNeedsRebuild){previewNeedsRebuild=false;renderTicker();}
+   else applyStyle(el);
+ });
+}
+function previewSettingsFromControls(){readPreviewControls();updatePreviewLabels();applyStyle($('previewTicker'))}
+for(const id of ['iconSize','textSize','textOffset','speed','spacing','panelColor','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap']){
+ $(id).oninput=()=>schedulePreview(false);
+}
+$('rowCount').oninput=()=>schedulePreview(true);
+$('rowDuration').oninput=()=>schedulePreview(true);
+$('fontFamily').onchange=()=>schedulePreview(false);
+$('textOutline').onchange=()=>schedulePreview(false);
+$('overlayStyle').onchange=()=>{if(!isPro()&&$('overlayStyle').value==='rotator'){$('overlayStyle').value='ticker';toast('Динамический список доступен только в PRO')}schedulePreview(true)};
+$('overlayOrientation').onchange=()=>schedulePreview(true);
+$('cardStyle').onchange=()=>{if(!isPro()&&$('cardStyle').value==='graphic'){$('cardStyle').value='standard';toast('Жидкое Стекло доступно только в PRO')}schedulePreview(true)};
 
 $('applyOverlay').onclick=async()=>{
  previewSettingsFromControls();
