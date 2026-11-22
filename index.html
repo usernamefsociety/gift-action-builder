@@ -603,6 +603,22 @@ body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage>.tile{
 
 
 
+
+/* v55: keep the vertical Ticker preview compact; Dynamic List remains content-sized */
+body.vertical-overlay.ticker-selected #app .preview .tickerwrap{
+  display:block!important;
+  height:220px!important;
+  min-height:220px!important;
+  max-height:220px!important;
+  overflow:hidden!important;
+  contain:layout paint!important;
+}
+body.vertical-overlay.ticker-selected #app .preview{
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
