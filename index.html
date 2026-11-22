@@ -271,6 +271,76 @@ body.grid-selected .non-grid-spacing{display:none}
  width:100%;min-width:0;max-width:100%;overflow:hidden;
 }
 
+
+/* v31: rotator cards keep their own width; rowCount only controls page size */
+#app .ticker.rotator-host .rotator-stage,
+body.overlay .ticker.rotator-host .rotator-stage{
+  grid-template-columns:repeat(var(--row-count,5),var(--rotator-card-width,100px))!important;
+  justify-content:start!important;
+  align-items:start!important;
+  overflow:visible!important;
+}
+#app .ticker.rotator-host .rotator-stage .tile,
+body.overlay .ticker.rotator-host .rotator-stage .tile{
+  width:var(--rotator-card-width,100px)!important;
+  min-width:var(--rotator-card-width,100px)!important;
+  max-width:var(--rotator-card-width,100px)!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  box-sizing:border-box;
+}
+#app .ticker.rotator-host .rotator-stage .tile b,
+body.overlay .ticker.rotator-host .rotator-stage .tile b{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  line-height:1.25!important;
+  text-overflow:clip!important;
+}
+#app .ticker.rotator-host .rotator-stage .tile.graphic-tile,
+body.overlay .ticker.rotator-host .rotator-stage .tile.graphic-tile{
+  width:var(--panel-width,150px)!important;
+  min-width:var(--panel-width,150px)!important;
+  max-width:var(--panel-width,150px)!important;
+  height:var(--panel-height,126px)!important;
+  min-height:var(--panel-height,126px)!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+
+
+/* v32: rotator labels keep only user-entered line breaks; never auto-wrap */
+#app .ticker.rotator-host .rotator-stage .tile,
+body.overlay .ticker.rotator-host .rotator-stage .tile{
+  overflow:visible!important;
+}
+#app .ticker.rotator-host .rotator-stage .tile b,
+body.overlay .ticker.rotator-host .rotator-stage .tile b{
+  display:block!important;
+  width:max-content!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  white-space:pre!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  hyphens:none!important;
+  text-overflow:clip!important;
+  text-align:center!important;
+  align-self:center!important;
+  line-height:1.25!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -441,6 +511,10 @@ function fillTicker(el,items){
    el.className='ticker rotator-host';
    el.style.width='100%';el.style.minWidth='0';el.style.maxWidth='100%';
    el.style.setProperty('--row-count',perRow);
+   const rotatorCardWidth=state.settings.cardStyle==='graphic'
+     ? (Number(state.settings.panelWidth)||150)
+     : Math.max((Number(state.settings.iconSize)||64)+20,100);
+   el.style.setProperty('--rotator-card-width',rotatorCardWidth+'px');
    const showPage=(index)=>{
      const old=el.querySelector('.rotator-stage');
      if(old){
