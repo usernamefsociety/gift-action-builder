@@ -465,6 +465,15 @@ function fillTicker(el,items){
    }
    return;
  }
+ if(state.settings.overlayStyle==='grid'){
+   const parser=document.createElement('div');parser.innerHTML=items;
+   const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
+   if(!cards.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
+   const columns=Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5));
+   el.className='ticker grid-host';el.style.setProperty('--grid-columns',columns);el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');
+   el.innerHTML=cards.map(node=>node.outerHTML).join('');
+   return;
+ }
  el.className='ticker';
  const wrap=el.parentElement;
  const viewportWidth=Math.max(1,wrap.clientWidth||window.innerWidth||1080);
