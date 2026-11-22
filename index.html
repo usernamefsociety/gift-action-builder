@@ -395,6 +395,39 @@ body.overlay .ticker.grid-host{
   grid-row-gap:var(--grid-row-gap,22px)!important;
 }
 
+
+/* v35: grid columns use the configured card width; gaps only control spacing */
+#app .ticker.grid-host,
+body.overlay .ticker.grid-host{
+  display:grid!important;
+  width:max-content!important;
+  min-width:0!important;
+  max-width:none!important;
+  grid-template-columns:repeat(var(--grid-columns,5),var(--grid-card-width,100px))!important;
+  grid-auto-columns:var(--grid-card-width,100px)!important;
+  justify-content:start!important;
+  justify-items:center!important;
+  align-content:start!important;
+  column-gap:var(--grid-column-gap,22px)!important;
+  grid-column-gap:var(--grid-column-gap,22px)!important;
+  row-gap:var(--grid-row-gap,22px)!important;
+  grid-row-gap:var(--grid-row-gap,22px)!important;
+}
+#app .ticker.grid-host .tile,
+body.overlay .ticker.grid-host .tile{
+  width:var(--grid-card-width,100px)!important;
+  min-width:var(--grid-card-width,100px)!important;
+  max-width:var(--grid-card-width,100px)!important;
+  justify-self:center!important;
+  overflow:visible!important;
+}
+#app .ticker.grid-host .tile.graphic-tile,
+body.overlay .ticker.grid-host .tile.graphic-tile{
+  width:var(--panel-width,150px)!important;
+  min-width:var(--panel-width,150px)!important;
+  max-width:var(--panel-width,150px)!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -598,7 +631,14 @@ function fillTicker(el,items){
    const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
    if(!cards.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
    const columns=Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5));
-   el.className='ticker grid-host';el.style.setProperty('--grid-columns',columns);el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');
+   const gridCardWidth=state.settings.cardStyle==='graphic'
+     ? (Number(state.settings.panelWidth)||150)
+     : Math.max((Number(state.settings.iconSize)||64)+20,100);
+   el.className='ticker grid-host';
+   el.style.setProperty('--grid-columns',columns);
+   el.style.setProperty('--grid-card-width',gridCardWidth+'px');
+   el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');
+   el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');
    el.innerHTML=cards.map(node=>node.outerHTML).join('');
    return;
  }
