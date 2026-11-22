@@ -194,6 +194,8 @@ body.auth-open #accountPanel{display:block!important}
 /* v19: alternate rotating-list overlay */
 .rotator-setting{display:none}
 body.rotator-selected .rotator-setting{display:block}
+.ticker-speed-setting{display:none}
+body.ticker-selected .ticker-speed-setting{display:block}
 .rotator-stage{width:100%;min-width:0;display:grid;grid-template-columns:repeat(var(--row-count,5),minmax(0,1fr));gap:var(--gap,22px);opacity:1;transform:translateY(0) scale(1);filter:blur(0);transition:opacity 1.15s cubic-bezier(.22,.61,.36,1),transform 1.15s cubic-bezier(.22,.61,.36,1),filter 1.15s cubic-bezier(.22,.61,.36,1);will-change:opacity,transform,filter}
 .rotator-stage.is-fading{opacity:0;transform:translate3d(0,3px,0) scale(.997);filter:blur(.5px)}
 .rotator-stage .tile{width:100%;min-width:0;max-width:100%;overflow:hidden}
@@ -210,8 +212,9 @@ body.overlay .overlaypage{align-items:center}
  white-space:normal!important;overflow:hidden!important;animation:none!important;
 }
 #app .ticker.rotator-host .rotator-stage,body.overlay .ticker.rotator-host .rotator-stage{
- display:grid!important;width:100%!important;max-width:100%!important;min-width:0!important;
- box-sizing:border-box;
+ display:flex!important;flex-flow:row nowrap!important;align-items:flex-start!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ box-sizing:border-box;gap:var(--gap,22px)!important;
 }
 
 
@@ -237,13 +240,13 @@ body.grid-selected .non-grid-spacing{display:none}
  display:grid!important;width:100%!important;min-width:0!important;max-width:100%!important;
  grid-template-columns:repeat(var(--grid-columns,5),minmax(0,1fr))!important;
  grid-auto-rows:max-content;align-items:start;justify-items:center;align-content:start;
- column-gap:var(--grid-column-gap,22px);row-gap:var(--grid-row-gap,22px);padding:12px;box-sizing:border-box;
+ column-gap:var(--grid-column-gap,22px)!important;row-gap:var(--grid-row-gap,22px)!important;gap:normal!important;padding:12px;box-sizing:border-box;
  white-space:normal!important;overflow:visible!important;animation:none!important;
 }
 #app .ticker.grid-host .tile,body.overlay .ticker.grid-host .tile{width:100%;min-width:0;max-width:100%;overflow:visible}
 #app .ticker.grid-host .graphic-tile,body.overlay .ticker.grid-host .graphic-tile{width:min(100%,var(--panel-width,150px));justify-self:center}
 .rotator-host{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;isolation:isolate;overflow:visible!important}
-.rotator-stage{position:relative;inset:auto;grid-area:1/1;display:flex;flex-wrap:nowrap;flex-direction:row;justify-content:flex-start;align-items:flex-start;gap:var(--gap,22px);padding:16px;box-sizing:border-box;opacity:1;min-width:0}
+.rotator-stage{position:relative;inset:auto;grid-area:1/1;display:flex!important;flex-flow:row nowrap!important;justify-content:flex-start;align-items:flex-start;gap:var(--gap,22px)!important;padding:16px;box-sizing:border-box;opacity:1;min-width:0}
 .rotator-stage.is-fading{opacity:0;pointer-events:none}
 .rotator-stage.is-visible{opacity:1;pointer-events:auto}
 </style></head><body>
@@ -270,7 +273,7 @@ body.grid-selected .non-grid-spacing{display:none}
     <div class="field"><label>Шрифт подписей</label><select id="fontFamily"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
     <div class="field"><label>Размер подписи: <b class="rangeval" id="textVal">12 px</b></label><input id="textSize" type="range" min="8" max="32" value="12"></div>
     <div class="field"><label>Чёрная обводка текста</label><select id="textOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
-    <div class="field"><label>Скорость строки: <b class="rangeval" id="speedVal">28 сек</b></label><input id="speed" type="range" min="5" max="120" value="28"></div>
+    <div class="field ticker-speed-setting"><label>Скорость строки: <b class="rangeval" id="speedVal">28 сек</b></label><input id="speed" type="range" min="5" max="120" value="28"></div>
     <div class="field non-grid-spacing"><label>Расстояние между подарками: <b class="rangeval" id="gapVal">22 px</b></label><input id="spacing" type="range" min="0" max="100" value="22"></div>
     <div class="field rotator-setting"><label>Подарков-действий в ряду: <b class="rangeval" id="rowCountVal">5</b></label><input id="rowCount" type="range" min="1" max="9" value="5"></div>
     <div class="field rotator-setting"><label>Длительность показа строки: <b class="rangeval" id="rowDurationVal">5 сек</b></label><input id="rowDuration" type="range" min="2" max="30" value="5"></div>
@@ -521,7 +524,7 @@ $('setList').addEventListener('click',e=>{
 $('exportBtn').onclick=()=>{const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.href=u;a.download='gift-actions.json';a.click();URL.revokeObjectURL(u)};
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!Array.isArray(x.sets))throw Error();state=x;persist();render();toast('Наборы импортированы')}catch{alert('Не удалось импортировать файл')}e.target.value=''};
 $('refreshPreview').onclick=()=>{renderTicker();toast('Предпросмотр обновлён')};
-function syncControls(){for(const [id,key,suffix] of [['iconSize','iconSize',' px'],['textSize','textSize',' px'],['speed','speed',' сек'],['spacing','spacing',' px'],['rowCount','rowCount',''],['rowDuration','rowDuration',' сек'],['panelWidth','panelWidth',' px'],['panelHeight','panelHeight',' px'],['gridColumns','gridColumns',''],['gridColumnGap','gridColumnGap',' px'],['gridRowGap','gridRowGap',' px']]){if($(id)){$(id).value=state.settings[key]??({rowCount:5,rowDuration:5,panelWidth:150,panelHeight:126,gridColumns:5,gridColumnGap:22,gridRowGap:22}[key]??0);const label={iconSize:'iconVal',textSize:'textVal',speed:'speedVal',spacing:'gapVal',rowCount:'rowCountVal',rowDuration:'rowDurationVal',panelWidth:'panelWidthVal',panelHeight:'panelHeightVal',gridColumns:'gridColumnsVal',gridColumnGap:'gridColumnGapVal',gridRowGap:'gridRowGapVal'}[id];if($(label))$(label).textContent=$(id).value+suffix}}$('fontFamily').value=state.settings.fontFamily||'Inter, sans-serif';$('textOutline').value=String(state.settings.textOutline||0);$('overlayStyle').value=state.settings.overlayStyle||'ticker';$('cardStyle').value=state.settings.cardStyle||'standard';$('panelColor').value=state.settings.panelColor||'#6d83ff';document.body.classList.toggle('rotator-selected',state.settings.overlayStyle==='rotator');document.body.classList.toggle('grid-selected',state.settings.overlayStyle==='grid');document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic')}
+function syncControls(){for(const [id,key,suffix] of [['iconSize','iconSize',' px'],['textSize','textSize',' px'],['speed','speed',' сек'],['spacing','spacing',' px'],['rowCount','rowCount',''],['rowDuration','rowDuration',' сек'],['panelWidth','panelWidth',' px'],['panelHeight','panelHeight',' px'],['gridColumns','gridColumns',''],['gridColumnGap','gridColumnGap',' px'],['gridRowGap','gridRowGap',' px']]){if($(id)){$(id).value=state.settings[key]??({rowCount:5,rowDuration:5,panelWidth:150,panelHeight:126,gridColumns:5,gridColumnGap:22,gridRowGap:22}[key]??0);const label={iconSize:'iconVal',textSize:'textVal',speed:'speedVal',spacing:'gapVal',rowCount:'rowCountVal',rowDuration:'rowDurationVal',panelWidth:'panelWidthVal',panelHeight:'panelHeightVal',gridColumns:'gridColumnsVal',gridColumnGap:'gridColumnGapVal',gridRowGap:'gridRowGapVal'}[id];if($(label))$(label).textContent=$(id).value+suffix}}$('fontFamily').value=state.settings.fontFamily||'Inter, sans-serif';$('textOutline').value=String(state.settings.textOutline||0);$('overlayStyle').value=state.settings.overlayStyle||'ticker';$('cardStyle').value=state.settings.cardStyle||'standard';$('panelColor').value=state.settings.panelColor||'#6d83ff';document.body.classList.toggle('rotator-selected',state.settings.overlayStyle==='rotator');document.body.classList.toggle('grid-selected',state.settings.overlayStyle==='grid');document.body.classList.toggle('ticker-selected',state.settings.overlayStyle==='ticker');document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic')}
 function previewSettingsFromControls(){
  for(const id of ['iconSize','textSize','speed','spacing','rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'])state.settings[id]=+$(id).value;
  state.settings.fontFamily=$('fontFamily').value;
