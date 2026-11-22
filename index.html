@@ -472,6 +472,11 @@ body.panel-cards .action-panel-color-setting{display:block}
 </section>
 <section id="builder" class="tab">
 <div class="panel"><div class="panelhead"><div><h2>Текущий набор</h2></div><span class="pill" id="giftCount">0 действий</span></div><div class="row"><div class="grow"><label>Название набора</label><input id="setName" value="Мои игровые действия"></div><div class="actions" style="margin-top:20px"><button id="saveSet" class="hidden">Сохранить локально</button><button id="cloudSaveBtn" class="primary save-main">Сохранить</button><button id="publishBtn" class="hidden">Опубликовать Overlay</button></div></div></div>
+<div class="notice hidden" id="freeCardLimitNotice" style="margin:0 0 12px;border-color:#9a7040;background:#2a2119;color:#f2d5a8">
+ <strong>Превышен лимит FREE.</strong>
+ <span id="freeCardLimitText">В наборе больше 5 карточек.</span>
+ Удалите лишние карточки вручную. Остальные изменения будут доступны после сокращения набора до 5 карточек.
+</div>
 <div class="panel"><div class="panelhead"><div><h2>Карточки</h2></div><button id="addAction" class="primary">＋ Добавить действие</button></div><div id="actionList" class="giftlist"></div></div>
 
 <div class="panel" id="tickerSettingsPanel">
@@ -548,6 +553,7 @@ async function refreshLicense(){
  }
  updatePlanUi();
  if(!document.body.classList.contains('overlay')&&typeof render==='function')render();
+ else if(typeof updateFreeCardLimitUi==='function')updateFreeCardLimitUi();
 }
 function updatePlanUi(){
  const pro=isPro(),badge=$('planBadge');
@@ -563,6 +569,16 @@ function applyPlanLocks(){
  if(overlay){const opt=overlay.querySelector('option[value="rotator"]');if(opt){opt.disabled=!pro;opt.textContent=pro?'Меняющийся перечень':'Меняющийся перечень · PRO'}}
 }
 function freeCardLimitReached(){return !isPro()&&active().actions.length>=5}
+function freeCardOverLimit(){return !isPro()&&active().actions.length>5}
+function updateFreeCardLimitUi(){
+ const over=freeCardOverLimit(),notice=$('freeCardLimitNotice');
+ if(notice){
+  notice.classList.toggle('hidden',!over);
+  if(over)$('freeCardLimitText').textContent=`Сейчас ${active().actions.length} карточек, а бесплатно разрешено 5. Удалите ${active().actions.length-5} лишние.`;
+ }
+ const add=$('addAction');
+ if(add){add.disabled=freeCardLimitReached();add.title=freeCardLimitReached()?'Сначала сократите набор до 5 карточек':''}
+}
 function cloudSetLimitReached(set){return !isPro()&&!set?.cloudId&&state.sets.filter(x=>!!x.cloudId).length>=1}
 function cloudConfig(set){return {actions:set.actions,settings:state.settings}}
 async function cloudSaveActive(show=true){
@@ -654,6 +670,7 @@ async function adminSetLicense(plan){
 $('grantProBtn').onclick=()=>adminSetLicense('pro');
 $('revokeProBtn').onclick=()=>adminSetLicense('free');
 $('cloudSaveBtn').onclick=async()=>{
+ if(freeCardOverLimit()){toast('Нельзя сохранить изменения: сначала сократите набор до 5 карточек. Удаление карточек сохраняется автоматически.');return}
  active().name=$('setName').value.trim()||'Новый набор';
  localStorage.setItem(STORE,JSON.stringify(state));
  if(!currentUser){document.body.classList.add('auth-open');toast('Войди в аккаунт, чтобы сохранить набор в облако');return}
@@ -673,7 +690,7 @@ function toast(s){$('toast').textContent=s;$('toast').style.display='block';setT
 function render(){
  const s=active();$('setName').value=s.name;$('giftCount').textContent=s.actions.length+' действий';
  $('actionList').innerHTML=s.actions.length?s.actions.map(a=>{const g=giftById(a.giftIndex);return `<div class="giftcard ${a.hidden?'action-hidden':''}"><img src="${g.src}" alt=""><div class="detail"><strong>${esc(g.name)}</strong><div class="sub">${giftPrice(g.name)===null?'Цена неизвестна':giftPrice(g.name)+' монет'}${a.hidden?' · Скрыто из Overlay':''}</div><div class="action">${esc(a.action)}</div></div><div class="tools"><button data-up="${a.id}" title="Переместить выше" ${s.actions.indexOf(a)===0?'disabled':''}>↑</button><button data-down="${a.id}" title="Переместить ниже" ${s.actions.indexOf(a)===s.actions.length-1?'disabled':''}>↓</button><button data-edit="${a.id}" title="Редактировать">✎</button><button data-hide="${a.id}" title="${a.hidden?'Показать действие в Overlay':'Скрыть действие из Overlay'}">${a.hidden?'◉':'⊘'}</button><button class="danger" data-del="${a.id}" title="Удалить">×</button></div></div>`}).join(''):`<div class="empty">Пока нет действий. Нажми «Добавить действие», выбери подарок из каталога и впиши подпись.</div>`;
- renderTicker();renderSets();syncControls();
+ renderTicker();renderSets();syncControls();updateFreeCardLimitUi();
 }
 function tickerMarkup(){const actions=active().actions.filter(a=>!a.hidden);return actions.map(a=>{const g=giftById(a.giftIndex);if(!g)return '';return (state.settings.cardStyle==='graphic'||state.settings.cardStyle==='neon')?`<div class="tile graphic-tile ${state.settings.cardStyle==='neon'?'neon-tile':'liquid-tile'}"${a.panelColor?` style="--panel-hue:${panelHue(a.panelColor)}deg"`:''}><img class="panel-art" src="${state.settings.cardStyle==='neon'?NEON_ART:PANEL_ART}" alt=""><img class="gift-art" src="${g.src}" alt="${esc(g.name)}"><b>${esc(a.action)}</b></div>`:`<div class="tile"><img src="${g.src}" alt="${esc(g.name)}"><b>${esc(a.action)}</b></div>`}).join('')}
 function fillTicker(el,items){
@@ -798,8 +815,11 @@ $('catalogGrid').onclick=e=>{const b=e.target.closest('[data-pick]');if(!b)retur
 $('closeDialog').onclick=()=>$('actionDialog').close();$('backToCatalog').onclick=showCatalog;
 $('actionPanelColor').oninput=()=>{actionPanelColor=$('actionPanelColor').value};$('resetActionPanelColor').onclick=()=>{actionPanelColor=null;$('actionPanelColor').value=state.settings.panelColor||'#6d83ff'}; $('saveAction').onclick=()=>{const action=$('actionName').value.trim();if(!chosen){toast('Сначала выбери подарок');return}if(!action){$('actionName').focus();toast('Впиши название действия');return}const s=active();if(!editing&&!isPro()&&s.actions.length>=5){toast('FREE позволяет добавить не более 5 карточек. Для дополнительных карточек нужен PRO.');return}const old=editing?s.actions.find(x=>x.id===editing):null,item={id:editing||uid(),giftIndex:chosen._index??CATALOG.indexOf(chosen),action,hidden:!!old?.hidden};if(actionPanelColor)item.panelColor=actionPanelColor;if(editing){const i=s.actions.findIndex(x=>x.id===editing);if(i>=0)s.actions[i]=item}else s.actions.push(item);persist();$('actionDialog').close();render();toast('Действие сохранено')};
 $('addAction').onclick=()=>{if(freeCardLimitReached()){toast('FREE позволяет добавить не более 5 карточек. Для дополнительных карточек нужен PRO.');return}openDialog()};
-$('actionList').onclick=e=>{const up=e.target.closest('[data-up]'),down=e.target.closest('[data-down]');if(up||down){const id=(up||down).dataset[up?'up':'down'];const list=active().actions;const from=list.findIndex(x=>x.id===id);const to=from+(up?-1:1);if(from>=0&&to>=0&&to<list.length){[list[from],list[to]]=[list[to],list[from]];persist();render()}return}const ed=e.target.closest('[data-edit]'),del=e.target.closest('[data-del]'),hide=e.target.closest('[data-hide]');if(ed){const a=active().actions.find(x=>x.id===ed.dataset.edit);openDialog(a)}if(hide){const a=active().actions.find(x=>x.id===hide.dataset.hide);if(a){a.hidden=!a.hidden;persist();render();toast(a.hidden?'Действие скрыто из Overlay':'Действие снова отображается в Overlay')}}if(del){active().actions=active().actions.filter(x=>x.id!==del.dataset.del);persist();render()}};
-$('setName').onchange=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();renderSets()};$('saveSet').onclick=()=>{active().name=$('setName').value.trim()||'Новый набор';persist();toast('Набор сохранён')};
+$('actionList').onclick=e=>{
+ const del=e.target.closest('[data-del]');
+ if(freeCardOverLimit()&&!del){toast('Сначала удалите лишние карточки: при превышении лимита FREE доступны только удаления.');return}
+ const up=e.target.closest('[data-up]'),down=e.target.closest('[data-down]');if(up||down){const id=(up||down).dataset[up?'up':'down'];const list=active().actions;const from=list.findIndex(x=>x.id===id);const to=from+(up?-1:1);if(from>=0&&to>=0&&to<list.length){[list[from],list[to]]=[list[to],list[from]];persist();render()}return}const ed=e.target.closest('[data-edit]'),hide=e.target.closest('[data-hide]');if(ed){const a=active().actions.find(x=>x.id===ed.dataset.edit);openDialog(a)}if(hide){const a=active().actions.find(x=>x.id===hide.dataset.hide);if(a){a.hidden=!a.hidden;persist();render();toast(a.hidden?'Действие скрыто из Overlay':'Действие снова отображается в Overlay')}}if(del){active().actions=active().actions.filter(x=>x.id!==del.dataset.del);persist();render()}};
+$('setName').onchange=()=>{if(freeCardOverLimit()){ $('setName').value=active().name;toast('Сначала сократите набор до 5 карточек.');return}active().name=$('setName').value.trim()||'Новый набор';persist();renderSets()};$('saveSet').onclick=()=>{if(freeCardOverLimit()){toast('Сначала сократите набор до 5 карточек.');return}active().name=$('setName').value.trim()||'Новый набор';persist();toast('Набор сохранён')};
 $('newSet').onclick=()=>{if(!isPro()&&state.sets.length>=1){toast('FREE позволяет создать только 1 набор. Для дополнительных наборов нужен PRO.');return}const name=prompt('Название нового набора:','Новый игровой набор');if(!name)return;const s={id:uid(),name,actions:[],cloudId:null,publicId:null,isPublic:false};state.sets.push(s);state.activeSet=s.id;persist();render();switchTab('builder')};
 $('setList').addEventListener('click',e=>{
  const d=e.target.closest('[data-setdel]'),c=e.target.closest('[data-setcopy]');
