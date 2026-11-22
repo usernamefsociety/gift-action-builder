@@ -577,6 +577,29 @@ body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile.graphic-
   max-width:100%!important;
 }
 
+
+/* v51: show the complete configured vertical page in the live overlay */
+body.overlay.vertical-overlay .overlaypage:has(.ticker.rotator-host),
+body.overlay.vertical-overlay .overlaypage:has(.ticker.rotator-host) .tickerwrap{
+  height:100vh!important;max-height:100vh!important;min-height:0!important;
+  overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host{
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage{
+  display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage>.tile{
+  display:flex!important;flex:0 0 auto!important;
+  width:auto!important;min-height:0!important;max-width:100%!important;
+  overflow:visible!important;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -899,7 +922,7 @@ function fillTicker(el,items){
    const parser=document.createElement('div');
    parser.innerHTML=items;
    const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
-   const vertical=state.settings.overlayOrientation==='vertical';
+   const vertical=state.settings.overlayOrientation==='vertical'||document.body.classList.contains('vertical-overlay');
    const perPage=Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
    const pages=[];
    for(let i=0;i<cards.length;i+=perPage)pages.push(cards.slice(i,i+perPage).map(node=>node.outerHTML).join(''));
