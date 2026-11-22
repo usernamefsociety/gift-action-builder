@@ -802,7 +802,8 @@ function fillTicker(el,items){
    const parser=document.createElement('div');
    parser.innerHTML=items;
    const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
-   const perRow=Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
+   const vertical=state.settings.overlayOrientation==='vertical';
+   const perRow=vertical?1:Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
    const pages=[];
    for(let i=0;i<cards.length;i+=perRow)pages.push(cards.slice(i,i+perRow).map(node=>node.outerHTML).join(''));
    if(!pages.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
@@ -1010,3 +1011,41 @@ function overlayMode(){
 }
 if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
 </script></body></html>
+
+
+/* v46: keep portrait ticker preview compact and make rotator orientation explicit */
+#app .preview .tickerwrap{
+ height:220px!important;max-height:220px!important;min-height:220px!important;
+ overflow:hidden!important;contain:layout paint!important;
+}
+#app .preview .tickerwrap .ticker{
+ max-height:220px!important;
+}
+#app.vertical-overlay .preview .tickerwrap,
+body.vertical-overlay #app .preview .tickerwrap{
+ height:220px!important;max-height:220px!important;min-height:220px!important;
+}
+#app.vertical-overlay .preview .ticker.rotator-host,
+body.vertical-overlay #app .preview .ticker.rotator-host{
+ height:220px!important;max-height:220px!important;min-height:220px!important;
+ display:block!important;overflow:hidden!important;
+}
+#app.vertical-overlay .preview .ticker.rotator-host .rotator-stage,
+body.vertical-overlay #app .preview .ticker.rotator-host .rotator-stage{
+ display:flex!important;flex-flow:column nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ max-height:none!important;gap:var(--gap,22px)!important;
+}
+#app.vertical-overlay .preview .ticker.rotator-host .rotator-stage .tile,
+body.vertical-overlay #app .preview .ticker.rotator-host .rotator-stage .tile{
+ width:auto!important;max-width:100%!important;min-width:0!important;
+ flex:0 0 auto!important;overflow:visible!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage{
+ display:flex!important;flex-flow:column nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+}
+body.overlay.vertical-overlay .ticker.rotator-host .rotator-stage .tile{
+ width:auto!important;max-width:100%!important;flex:0 0 auto!important;
+}
