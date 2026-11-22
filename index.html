@@ -249,6 +249,28 @@ body.grid-selected .non-grid-spacing{display:none}
 .rotator-stage{position:relative;inset:auto;grid-area:1/1;display:flex!important;flex-flow:row nowrap!important;justify-content:flex-start;align-items:flex-start;gap:var(--gap,22px)!important;padding:16px;box-sizing:border-box;opacity:1;min-width:0}
 .rotator-stage.is-fading{opacity:0;pointer-events:none}
 .rotator-stage.is-visible{opacity:1;pointer-events:auto}
+
+/* v29: restore v24 single-stage rotating list */
+#app .ticker.rotator-host,body.overlay .ticker.rotator-host{
+ display:block!important;position:relative!important;isolation:auto!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ overflow:hidden!important;animation:none!important;
+}
+#app .ticker.rotator-host .rotator-stage,body.overlay .ticker.rotator-host .rotator-stage{
+ display:grid!important;grid-template-columns:repeat(var(--row-count,5),minmax(0,1fr))!important;
+ grid-auto-flow:row!important;grid-auto-rows:auto!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ gap:var(--gap,22px)!important;box-sizing:border-box;
+ opacity:1;transform:translateY(0) scale(1);filter:blur(0);
+ transition:opacity 1.15s cubic-bezier(.22,.61,.36,1),transform 1.15s cubic-bezier(.22,.61,.36,1),filter 1.15s cubic-bezier(.22,.61,.36,1);
+}
+#app .ticker.rotator-host .rotator-stage.is-fading,body.overlay .ticker.rotator-host .rotator-stage.is-fading{
+ opacity:0;transform:translateY(-10px) scale(.985);filter:blur(3px);
+}
+#app .ticker.rotator-host .rotator-stage .tile,body.overlay .ticker.rotator-host .rotator-stage .tile{
+ width:100%;min-width:0;max-width:100%;overflow:hidden;
+}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">TikTok gift catalog · оформление подарков · Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -409,40 +431,38 @@ function fillTicker(el,items){
    return;
  }
  if(state.settings.overlayStyle==='rotator'){
-   const parser=document.createElement('div');parser.innerHTML=items;
+   const parser=document.createElement('div');
+   parser.innerHTML=items;
    const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
    const perRow=Math.max(1,Math.min(9,Number(state.settings.rowCount)||5));
-   const pages=[];for(let i=0;i<cards.length;i+=perRow)pages.push(cards.slice(i,i+perRow).map(node=>node.outerHTML).join(''));
+   const pages=[];
+   for(let i=0;i<cards.length;i+=perRow)pages.push(cards.slice(i,i+perRow).map(node=>node.outerHTML).join(''));
    if(!pages.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
-   el.className='ticker rotator-host';el.style.removeProperty('--grid-columns');el.style.width='100%';el.style.minWidth='0';el.style.maxWidth='100%';
+   el.className='ticker rotator-host';
+   el.style.width='100%';el.style.minWidth='0';el.style.maxWidth='100%';
    el.style.setProperty('--row-count',perRow);
-   let page=0,front=0,transitioning=false;
-   const makeStage=(index,visible)=>`<div class="rotator-stage ${visible?'is-visible':'is-fading'}">${pages[index]}</div>`;
-   el.innerHTML=makeStage(0,true)+makeStage(pages.length>1?1:0,false);
-   const stages=Array.from(el.querySelectorAll('.rotator-stage'));
-   const transitionMs=1750;
-   const showNext=()=>{
-     if(transitioning||!el.isConnected)return;
-     transitioning=true;
-     const back=1-front,nextPage=(page+1)%pages.length;
-     stages[back].innerHTML=pages[nextPage];
-     stages[back].classList.remove('is-fading');stages[back].classList.add('is-visible');
-     stages[front].classList.remove('is-visible');stages[front].classList.add('is-fading');
-     setTimeout(()=>{if(!el.isConnected)return;page=nextPage;front=back;transitioning=false},transitionMs+100);
+   const showPage=(index)=>{
+     const old=el.querySelector('.rotator-stage');
+     if(old){
+       old.classList.add('is-fading');
+       setTimeout(()=>{
+         if(!el.isConnected)return;
+         el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
+         const next=el.querySelector('.rotator-stage');
+         requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.remove('is-fading')));
+       },1150);
+     }else{
+       el.innerHTML=`<div class="rotator-stage is-fading">${pages[index]}</div>`;
+       const first=el.querySelector('.rotator-stage');
+       requestAnimationFrame(()=>requestAnimationFrame(()=>first.classList.remove('is-fading')));
+     }
    };
+   let page=0;showPage(page);
    if(pages.length>1){
      const duration=Math.max(2,Number(state.settings.rowDuration)||5)*1000;
-     el._rotateTimer=setInterval(showNext,duration+transitionMs);
+     const transitionMs=1150;
+     el._rotateTimer=setInterval(()=>{page=(page+1)%pages.length;showPage(page)},duration+transitionMs);
    }
-   return;
- }
- if(state.settings.overlayStyle==='grid'){
-   const parser=document.createElement('div');parser.innerHTML=items;
-   const cards=Array.from(parser.children).filter(node=>node.classList.contains('tile'));
-   if(!cards.length){el.innerHTML='<div class="empty">Нет видимых действий</div>';return}
-   const columns=Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5));
-   el.className='ticker grid-host';el.style.setProperty('--grid-columns',columns);el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');
-   el.innerHTML=cards.map(node=>node.outerHTML).join('');
    return;
  }
  el.className='ticker';
