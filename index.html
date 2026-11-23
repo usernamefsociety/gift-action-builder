@@ -1183,6 +1183,15 @@ $('refreshPreview').onclick=()=>{renderTicker();toast('Предпросмотр 
 function syncControls(){applyPlanLocks();for(const [id,key,suffix] of [['iconSize','iconSize',' px'],['textSize','textSize',' px'],['textOffset','textOffset',' px'],['speed','speed',' сек'],['spacing','spacing',' px'],['rowCount','rowCount',''],['rowDuration','rowDuration',' сек'],['panelWidth','panelWidth',' px'],['panelHeight','panelHeight',' px'],['gridColumns','gridColumns',''],['gridColumnGap','gridColumnGap',' px'],['gridRowGap','gridRowGap',' px']]){if($(id)){$(id).value=state.settings[key]??({textOffset:0,rowCount:5,rowDuration:5,panelWidth:150,panelHeight:126,gridColumns:5,gridColumnGap:22,gridRowGap:22}[key]??0);const label={iconSize:'iconVal',textSize:'textVal',textOffset:'textOffsetVal',speed:'speedVal',spacing:'gapVal',rowCount:'rowCountVal',rowDuration:'rowDurationVal',panelWidth:'panelWidthVal',panelHeight:'panelHeightVal',gridColumns:'gridColumnsVal',gridColumnGap:'gridColumnGapVal',gridRowGap:'gridRowGapVal'}[id];if($(label))$(label).textContent=$(id).value+suffix}}$('fontFamily').value=state.settings.fontFamily||'Inter, sans-serif';$('textOutline').value=String(state.settings.textOutline||0);$('overlayStyle').value=state.settings.overlayStyle||'ticker';if($('overlayOrientation'))$('overlayOrientation').value=state.settings.overlayOrientation||'horizontal';$('cardStyle').value=state.settings.cardStyle||'standard';$('panelColor').value=state.settings.panelColor||'#6d83ff';document.body.classList.toggle('rotator-selected',state.settings.overlayStyle==='rotator');document.body.classList.toggle('grid-selected',state.settings.overlayStyle==='grid');document.body.classList.toggle('ticker-selected',state.settings.overlayStyle==='ticker');document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic');document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='neon')}
 // Lightweight preview updates: visual sliders only touch CSS variables on existing DOM.
 let previewFrame=0, previewNeedsRebuild=false;
+function syncOverlayModeClasses(){
+ const style=state.settings.overlayStyle||'ticker';
+ document.body.classList.toggle('rotator-selected',style==='rotator');
+ document.body.classList.toggle('grid-selected',style==='grid');
+ document.body.classList.toggle('ticker-selected',style==='ticker');
+ document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');
+ document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic');
+ document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='neon');
+}
 function readPreviewControls(){
  const numeric=['iconSize','textSize','textOffset','speed','spacing','rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'];
  for(const id of numeric)state.settings[id]=+$(id).value;
@@ -1192,6 +1201,7 @@ function readPreviewControls(){
  state.settings.overlayOrientation=$('overlayOrientation')?.value||'horizontal';
  state.settings.cardStyle=$('cardStyle').value;
  state.settings.panelColor=$('panelColor').value;
+ syncOverlayModeClasses();
 }
 function updatePreviewLabels(){
  const pairs=[['iconSize','iconVal',' px'],['textSize','textVal',' px'],['textOffset','textOffsetVal',' px'],['speed','speedVal',' сек'],['spacing','gapVal',' px'],['rowCount','rowCountVal',''],['rowDuration','rowDurationVal',' сек'],['panelWidth','panelWidthVal',' px'],['panelHeight','panelHeightVal',' px'],['gridColumns','gridColumnsVal',''],['gridColumnGap','gridColumnGapVal',' px'],['gridRowGap','gridRowGapVal',' px']];
