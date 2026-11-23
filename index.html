@@ -681,28 +681,61 @@ body.vertical-overlay.ticker-selected #app .preview{
   <div class="panelhead">
     <div><h2>Оформление Overlay</h2></div>
   </div>
-  <div class="formgrid">
-    <div class="field"><label>Стиль Overlay</label><select id="overlayStyle"><option value="ticker">Бегущая строка</option><option value="rotator">Динамический список</option><option value="grid">Сетка</option></select></div>    <div class="field orientation-setting"><label>Ориентация Overlay</label><select id="overlayOrientation"><option value="horizontal">Горизонтальная</option><option value="vertical">Вертикальная</option></select></div>
-    <div class="field"><label>Стиль карточек</label><select id="cardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое Стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
-    <div class="field panel-setting"><label>Цвет бокса</label><div class="row"><input id="panelColor" type="color" value="#6d83ff" style="width:58px;height:42px;padding:4px"><span class="sub">Меняет оттенок панели, сохраняя блики и неоновые грани</span></div></div>
-    <div class="field"><label>Размер иконки подарка: <b class="rangeval" id="iconVal">64 px</b></label><input id="iconSize" type="range" min="24" max="150" value="64"></div>
-    <div class="field"><label>Изображения в карточках</label><select id="imageMode"><option value="off">Без изображений</option><option value="on">С изображениями</option></select></div>
-    <div class="field image-position-setting"><label>Положение иконки подарка по горизонтали: <b class="rangeval" id="giftPosXVal">0 px</b></label><input id="giftPosX" type="range" min="-60" max="60" step="1" value="0"></div>
-    <div class="field image-position-setting"><label>Положение иконки подарка по вертикали: <b class="rangeval" id="giftPosYVal">0 px</b></label><input id="giftPosY" type="range" min="-60" max="60" step="1" value="0"></div>
-    <div class="field panel-setting"><label>Ширина бокса: <b class="rangeval" id="panelWidthVal">150 px</b></label><input id="panelWidth" type="range" min="90" max="280" value="150"></div>
-    <div class="field panel-setting"><label>Высота бокса: <b class="rangeval" id="panelHeightVal">126 px</b></label><input id="panelHeight" type="range" min="80" max="240" value="126"></div>
-    <div class="field"><label>Шрифт подписей</label><select id="fontFamily"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
-    <div class="field"><label>Размер подписи: <b class="rangeval" id="textVal">12 px</b></label><input id="textSize" type="range" min="8" max="32" value="12"></div>
-    <div class="field"><label>Положение текста: <b class="rangeval" id="textOffsetVal">0 px</b></label><input id="textOffset" type="range" min="-40" max="40" step="1" value="0"></div>
-    <div class="field"><label>Чёрная обводка текста</label><select id="textOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
-    <div class="field ticker-speed-setting"><label>Скорость строки: <b class="rangeval" id="speedVal">28 сек</b></label><input id="speed" type="range" min="5" max="120" value="28"></div>
-    <div class="field non-grid-spacing"><label>Расстояние между карточками: <b class="rangeval" id="gapVal">22 px</b></label><input id="spacing" type="range" min="0" max="100" value="22"></div>
-    <div class="field rotator-setting"><label>Карточек в ряду: <b class="rangeval" id="rowCountVal">5</b></label><input id="rowCount" type="range" min="1" max="9" value="5"></div>
-    <div class="field rotator-setting"><label>Длительность показа строки: <b class="rangeval" id="rowDurationVal">5 сек</b></label><input id="rowDuration" type="range" min="2" max="30" value="5"></div>
-    <div class="field grid-setting"><label>Количество столбцов: <b class="rangeval" id="gridColumnsVal">5</b></label><input id="gridColumns" type="range" min="1" max="12" value="5"></div>
-    <div class="field grid-setting"><label>Расстояние между столбцами: <b class="rangeval" id="gridColumnGapVal">22 px</b></label><input id="gridColumnGap" type="range" min="0" max="120" value="22"></div>
-    <div class="field grid-setting"><label>Расстояние между строками: <b class="rangeval" id="gridRowGapVal">22 px</b></label><input id="gridRowGap" type="range" min="0" max="120" value="22"></div>
-  </div>
+  <style>
+    #tickerSettingsPanel .overlay-settings-group{border:1px solid var(--border,#393442);border-radius:12px;margin:10px 0;background:rgba(255,255,255,.018);overflow:hidden}
+    #tickerSettingsPanel .overlay-settings-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:13px 15px;font-weight:650;user-select:none}
+    #tickerSettingsPanel .overlay-settings-group>summary::-webkit-details-marker{display:none}
+    #tickerSettingsPanel .overlay-settings-group>summary:after{content:'⌄';margin-left:auto;color:var(--muted,#aaa);font-size:18px;transition:transform .15s}
+    #tickerSettingsPanel .overlay-settings-group[open]>summary:after{transform:rotate(180deg)}
+    #tickerSettingsPanel .overlay-settings-group>summary .group-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(167,139,250,.13);color:#b99aff}
+    #tickerSettingsPanel .overlay-settings-group .formgrid{padding:0 14px 14px}
+  </style>
+  <details class="overlay-settings-group" open>
+    <summary><span class="group-icon">▦</span>Тип и расположение</summary>
+    <div class="formgrid">
+      <div class="field"><label>Стиль Overlay</label><select id="overlayStyle"><option value="ticker">Бегущая строка</option><option value="rotator">Динамический список</option><option value="grid">Сетка</option></select></div>
+      <div class="field orientation-setting"><label>Ориентация Overlay</label><select id="overlayOrientation"><option value="horizontal">Горизонтальная</option><option value="vertical">Вертикальная</option></select></div>
+    </div>
+  </details>
+  <details class="overlay-settings-group" open>
+    <summary><span class="group-icon">▧</span>Внешний вид карточек</summary>
+    <div class="formgrid">
+      <div class="field"><label>Стиль карточек</label><select id="cardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое Стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
+      <div class="field panel-setting"><label>Цвет бокса</label><div class="row"><input id="panelColor" type="color" value="#6d83ff" style="width:58px;height:42px;padding:4px"><span class="sub">Меняет оттенок панели, сохраняя блики и неоновые грани</span></div></div>
+      <div class="field panel-setting"><label>Ширина бокса: <b class="rangeval" id="panelWidthVal">150 px</b></label><input id="panelWidth" type="range" min="90" max="280" value="150"></div>
+      <div class="field panel-setting"><label>Высота бокса: <b class="rangeval" id="panelHeightVal">126 px</b></label><input id="panelHeight" type="range" min="80" max="240" value="126"></div>
+    </div>
+  </details>
+  <details class="overlay-settings-group" open>
+    <summary><span class="group-icon">▣</span>Изображения и иконки</summary>
+    <div class="formgrid">
+      <div class="field"><label>Изображения в карточках</label><select id="imageMode"><option value="off">Без изображений</option><option value="on">С изображениями</option></select></div>
+      <div class="field"><label>Размер иконки подарка: <b class="rangeval" id="iconVal">64 px</b></label><input id="iconSize" type="range" min="24" max="150" value="64"></div>
+      <div class="field image-position-setting"><label>Положение иконки подарка по горизонтали: <b class="rangeval" id="giftPosXVal">0 px</b></label><input id="giftPosX" type="range" min="-60" max="60" step="1" value="0"></div>
+      <div class="field image-position-setting"><label>Положение иконки подарка по вертикали: <b class="rangeval" id="giftPosYVal">0 px</b></label><input id="giftPosY" type="range" min="-60" max="60" step="1" value="0"></div>
+    </div>
+  </details>
+  <details class="overlay-settings-group" open>
+    <summary><span class="group-icon">T</span>Текст и подписи</summary>
+    <div class="formgrid">
+      <div class="field"><label>Шрифт подписей</label><select id="fontFamily"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
+      <div class="field"><label>Размер подписи: <b class="rangeval" id="textVal">12 px</b></label><input id="textSize" type="range" min="8" max="32" value="12"></div>
+      <div class="field"><label>Положение текста: <b class="rangeval" id="textOffsetVal">0 px</b></label><input id="textOffset" type="range" min="-40" max="40" step="1" value="0"></div>
+      <div class="field"><label>Чёрная обводка текста</label><select id="textOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
+    </div>
+  </details>
+  <details class="overlay-settings-group">
+    <summary><span class="group-icon">⚙</span>Дополнительные параметры</summary>
+    <div class="formgrid">
+      <div class="field non-grid-spacing"><label>Расстояние между карточками: <b class="rangeval" id="gapVal">22 px</b></label><input id="spacing" type="range" min="0" max="100" value="22"></div>
+      <div class="field ticker-speed-setting"><label>Скорость строки: <b class="rangeval" id="speedVal">28 сек</b></label><input id="speed" type="range" min="5" max="120" value="28"></div>
+      <div class="field rotator-setting"><label>Карточек в ряду: <b class="rangeval" id="rowCountVal">5</b></label><input id="rowCount" type="range" min="1" max="9" value="5"></div>
+      <div class="field rotator-setting"><label>Длительность показа строки: <b class="rangeval" id="rowDurationVal">5 сек</b></label><input id="rowDuration" type="range" min="2" max="30" value="5"></div>
+      <div class="field grid-setting"><label>Количество столбцов: <b class="rangeval" id="gridColumnsVal">5</b></label><input id="gridColumns" type="range" min="1" max="12" value="5"></div>
+      <div class="field grid-setting"><label>Расстояние между столбцами: <b class="rangeval" id="gridColumnGapVal">22 px</b></label><input id="gridColumnGap" type="range" min="0" max="120" value="22"></div>
+      <div class="field grid-setting"><label>Расстояние между строками: <b class="rangeval" id="gridRowGapVal">22 px</b></label><input id="gridRowGap" type="range" min="0" max="120" value="22"></div>
+    </div>
+  </details>
   <div class="actions" style="margin-top:16px">
     <button class="primary" id="applyOverlay">Сохранить изменения</button>
     <button id="copyOverlay">Скопировать ссылку Overlay</button>
