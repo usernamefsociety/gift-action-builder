@@ -1073,11 +1073,13 @@ function getTintedGlass(color){
  for(let i=0;i<d.length;i+=4){
   if(!d[i+3])continue;
   const lum=(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])/255;
-  const highlight=Math.max(0,Math.min(1,(lum-0.78)/0.22));
-  const shade=Math.max(0,Math.min(1,lum));
-  d[i]=Math.round(r*shade*(1-highlight)+255*highlight);
-  d[i+1]=Math.round(g*shade*(1-highlight)+255*highlight);
-  d[i+2]=Math.round(b*shade*(1-highlight)+255*highlight);
+  const shade=0.18+0.82*Math.pow(lum,0.88);
+  // Highlights and bevels remain bright, but inherit a soft version of the chosen hue.
+  const highlight=Math.max(0,Math.min(1,(lum-0.68)/0.32));
+  const whiteMix=0.12+0.48*highlight;
+  d[i]=Math.round((r*shade)*(1-whiteMix)+255*whiteMix);
+  d[i+1]=Math.round((g*shade)*(1-whiteMix)+255*whiteMix);
+  d[i+2]=Math.round((b*shade)*(1-whiteMix)+255*whiteMix);
  }
  ctx.putImageData(frame,0,0);
  const url=canvas.toDataURL('image/png');
@@ -1089,16 +1091,31 @@ function applyGlassTint(img){
  if(!img||!img.classList.contains('panel-art')||img.closest('.neon-tile'))return;
  const tile=img.closest('.graphic-tile');
  const color=normalizeGlassColor(tile?.dataset.panelColor||state.settings.panelColor);
- if(img.dataset.tintColor===color)return;
+ if(img.dataset.tintColor===color&&img.dataset.tintSource===PANEL_ART)return;
  const url=getTintedGlass(color);
- if(url){img.dataset.tintColor=color;img.src=url}
+ if(url){
+  img.dataset.tintColor=color;img.dataset.tintSource=PANEL_ART;
+  if(img.src!==url)img.src=url;
+ }
+}
+let glassTintObserver=null;
+function ensureGlassTintObserver(){
+ if(glassTintObserver||!document.body||!window.MutationObserver)return;
+ glassTintObserver=new MutationObserver(records=>{
+  for(const record of records)for(const node of record.addedNodes){
+   if(node.nodeType!==1)continue;
+   if(node.matches?.('.panel-art'))applyGlassTint(node);
+   node.querySelectorAll?.('.panel-art').forEach(applyGlassTint);
+  }
+ });
+ glassTintObserver.observe(document.body,{childList:true,subtree:true});
 }
 function recolorGlassIn(root){
  if(!root)return;
  if(root.matches?.('.panel-art'))applyGlassTint(root);
  root.querySelectorAll?.('.panel-art').forEach(applyGlassTint);
 }
-function applyStyle(el){recolorGlassIn(el);el.style.setProperty('--panel-hue',panelHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--glass-hue',glassHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--panel-width',(state.settings.panelWidth||150)+'px');el.style.setProperty('--panel-height',(state.settings.panelHeight||126)+'px');el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--text-offset',(Number(state.settings.textOffset)||0)+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--rotator-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-columns',Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5)));el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
+function applyStyle(el){ensureGlassTintObserver();recolorGlassIn(el);el.style.setProperty('--panel-hue',panelHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--glass-hue',glassHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--panel-width',(state.settings.panelWidth||150)+'px');el.style.setProperty('--panel-height',(state.settings.panelHeight||126)+'px');el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--text-offset',(Number(state.settings.textOffset)||0)+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--rotator-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-card-width',(state.settings.cardStyle==='graphic'?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-columns',Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5)));el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
 function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" onclick="window.openSavedSet(decodeURIComponent('${encodeURIComponent(s.id)}'))" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
 function switchTab(id){if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
 window.openSavedSet = function(id){
