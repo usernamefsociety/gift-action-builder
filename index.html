@@ -712,7 +712,7 @@ body.captions-hidden .tile>b{display:none!important}
   <details class="overlay-settings-group" open>
     <summary><span class="group-icon">▣</span>Изображения и иконки</summary>
     <div class="formgrid">
-      <div class="field"><label>Изображения в карточках</label><select id="imageMode"><option value="off">Без изображений</option><option value="on">С изображениями</option></select></div>
+      <div class="field"><label>Изображения в карточках</label><select id="imageMode"><option value="off">Без изображений</option><option value="on">С изображениями · PRO</option></select></div>
       <div class="field"><label>Размер иконки подарка: <b class="rangeval" id="iconVal">64 px</b></label><input id="iconSize" type="range" min="24" max="150" value="64"></div>
       <div class="field image-position-setting"><label>Положение иконки подарка по горизонтали: <b class="rangeval" id="giftPosXVal">0 px</b></label><input id="giftPosX" type="range" min="-60" max="60" step="1" value="0"></div>
       <div class="field image-position-setting"><label>Положение иконки подарка по вертикали: <b class="rangeval" id="giftPosYVal">0 px</b></label><input id="giftPosY" type="range" min="-60" max="60" step="1" value="0"></div>
@@ -815,15 +815,22 @@ function updatePlanUi(){
  const pro=isPro(),badge=$('planBadge');
  if(badge){badge.textContent=pro?'PRO':'FREE';badge.style.background=pro?'#194333':'#30243f';badge.style.color=pro?'#a9f0cb':'#dfc6ff'}
  const desc=$('planDescription');
- if(desc)desc.textContent=pro?'PRO: без ограничений на карточки и наборы; доступны все стили.':'FREE: до 5 карточек, 1 облачный набор, доступны «Без стиля», «Неон», «Бегущая строка» и «Сетка».';
+ if(desc)desc.textContent=pro?'PRO: без ограничений на карточки и наборы; доступны все стили и режим «С изображениями».':'FREE: до 5 карточек, 1 облачный набор; режим «С изображениями» и PRO-стили недоступны.';
  if($('adminNav')){$('adminNav').classList.toggle('admin-visible',isAdmin());$('adminNav').classList.toggle('hidden',!isAdmin());}
  if(!isAdmin()&&$('adminTab')&&!$('adminTab').classList.contains('hidden'))switchTab('builder');
  applyPlanLocks();
 }
 function applyPlanLocks(){
- const pro=isPro(),card=$('cardStyle'),overlay=$('overlayStyle');
+ const pro=isPro(),card=$('cardStyle'),overlay=$('overlayStyle'),imageMode=$('imageMode');
  if(card){for(const [value,label] of [['graphic','Жидкое Стекло'],['tile','Плитка']]){const opt=card.querySelector(`option[value="${value}"]`);if(opt){opt.disabled=!pro;opt.textContent=pro?label:label+' · PRO'}}}
  if(overlay){const opt=overlay.querySelector('option[value="rotator"]');if(opt){opt.disabled=!pro;opt.textContent=pro?'Динамический список':'Динамический список · PRO'}}
+ if(imageMode){const opt=imageMode.querySelector('option[value="on"]');if(opt){opt.disabled=!pro;opt.textContent=pro?'С изображениями':'С изображениями · PRO'}}
+ if(!pro&&state.settings?.imageMode==='on'){
+  state.settings.imageMode='off';
+  const set=typeof active==='function'?active():null;
+  if(set)set.settings={...defaultSettings(),...(set.settings||{}),imageMode:'off'};
+  if(imageMode)imageMode.value='off';
+ }
 }
 function freeCardLimitReached(){return !isPro()&&active().actions.length>=5}
 function freeCardOverLimit(){return !isPro()&&active().actions.length>5}
@@ -1504,7 +1511,7 @@ $('textOutline').onchange=()=>schedulePreview(false);
 $('overlayStyle').onchange=()=>{if(!isPro()&&$('overlayStyle').value==='rotator'){$('overlayStyle').value='ticker';toast('Динамический список доступен только в PRO')}schedulePreview(true)};
 $('overlayOrientation').onchange=()=>schedulePreview(true);
 $('cardStyle').onchange=()=>{if(!isPro()&&$('cardStyle').value==='graphic'){$('cardStyle').value='standard';toast('Жидкое Стекло доступно только в PRO')}schedulePreview(true)};
-$('imageMode').onchange=()=>schedulePreview(true);
+$('imageMode').onchange=()=>{if(!isPro()&&$('imageMode').value==='on'){$('imageMode').value='off';toast('Режим «С изображениями» доступен только в PRO')}schedulePreview(true)};
 $('showCaption').onchange=()=>schedulePreview(true);
 
 $('applyOverlay').onclick=async()=>{
