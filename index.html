@@ -644,6 +644,46 @@ body.vertical-overlay.ticker-selected #app .preview{
 
 /* v64: neutral black preview background for accurate card-color evaluation */
 #app .preview{background:#000!important;}
+
+/* v75: plain style + image mode uses the same image canvas behavior as graphic styles */
+.tile.image-mode:not(.graphic-tile){
+  position:relative!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  width:var(--panel-width,150px)!important;
+  min-width:var(--panel-width,150px)!important;
+  max-width:var(--panel-width,150px)!important;
+  height:var(--panel-height,126px)!important;
+  min-height:var(--panel-height,126px)!important;
+  flex:none!important;
+  overflow:visible!important;
+  text-align:center!important;
+}
+.tile.image-mode:not(.graphic-tile) .action-art{
+  left:50%!important;top:50%!important;
+  width:58%!important;height:58%!important;
+  max-width:none!important;max-height:none!important;
+  transform:translate(-50%,-50%)!important;
+  object-fit:contain!important;
+}
+.tile.image-mode:not(.graphic-tile) .gift-art{
+  left:auto!important;right:9px!important;top:9px!important;
+  bottom:auto!important;
+  width:var(--gift-badge-size,64px)!important;
+  height:var(--gift-badge-size,64px)!important;
+  max-width:none!important;max-height:none!important;
+  transform:translate(var(--gift-pos-x,0px),calc(0px - var(--gift-pos-y,0px)))!important;
+  object-fit:contain!important;
+}
+.tile.image-mode:not(.graphic-tile) b{
+  position:absolute!important;z-index:4!important;
+  left:50%!important;top:auto!important;bottom:5px!important;
+  width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;
+  transform:translate(-50%,calc(0px - var(--text-offset,0px)))!important;
+  margin:0!important;padding:0!important;
+  text-align:center!important;overflow-wrap:anywhere!important;
+}
+
 /* v72: allow captions to be hidden consistently across all Overlay styles */
 body.captions-hidden .tile>b{display:none!important}
 
@@ -977,7 +1017,7 @@ $('authToggle').onclick=()=>document.body.classList.toggle('auth-open');
 document.addEventListener('click',e=>{if(document.body.classList.contains('auth-open')&&!e.target.closest('#accountPanel')&&!e.target.closest('#authToggle'))document.body.classList.remove('auth-open')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('auth-open')});
 $('signInBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}const {data,error}=await db.auth.signInWithPassword({email,password});if(error){toast('Ошибка входа: '+error.message);return}authUi(data.user);await refreshLicense();document.body.classList.remove('auth-open');toast('Вход выполнен');await cloudLoadMine()};
-$('signUpBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}if(password.length<8){toast('Пароль должен содержать минимум 8 символов');return}const {data,error}=await db.auth.signUp({email,password});if(error){toast('Ошибка регистрации: '+error.message);return}if(data.session){authUi(data.user);await refreshLicense();document.body.classList.remove('auth-open');toast('Аккаунт создан');}else{toast('Аккаунт создан. Проверь почту и подтверди регистрацию.')}};
+$('signUpBtn').onclick=async()=>{const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){toast('Введи email и пароль');return}if(password.length<8){toast('Пароль должен содержать минимум 8 символов');return}const emailRedirectTo=window.location.origin+window.location.pathname;const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo}});if(error){toast('Ошибка регистрации: '+error.message);return}if(data.session){authUi(data.user);await refreshLicense();document.body.classList.remove('auth-open');toast('Аккаунт создан');}else{toast('Аккаунт создан. Проверь почту и подтверди регистрацию.')}};
 $('signOutBtn').onclick=async()=>{const {error}=await db.auth.signOut();if(error){toast('Ошибка выхода: '+error.message);return}authUi(null);await refreshLicense();toast('Вы вышли из аккаунта')};
 $('cloudLoadBtn').onclick=cloudLoadMine;
 async function adminSetLicense(plan){
