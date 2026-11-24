@@ -674,9 +674,10 @@ body.vertical-overlay.ticker-selected #app .preview{
 }
 .tile.image-mode:not(.graphic-tile) .action-art{
   left:50%!important;top:50%!important;
-  width:58%!important;height:58%!important;
+  width:var(--action-image-size,80px)!important;
+  height:var(--action-image-size,80px)!important;
   max-width:none!important;max-height:none!important;
-  transform:translate(-50%,-50%)!important;
+  transform:translate(calc(-50% + var(--action-image-pos-x,0px)),calc(-50% - var(--action-image-pos-y,0px)))!important;
   object-fit:contain!important;
 }
 .tile.image-mode:not(.graphic-tile) .gift-art{
