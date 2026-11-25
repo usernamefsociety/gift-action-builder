@@ -755,6 +755,16 @@ body.captions-hidden .tile>b{display:none!important}
 @media(prefers-reduced-motion:reduce){.randomizer-wait-card,.roulette-shell{transition-duration:.12s}}
 
 
+
+/* Randomizer waiting card now reuses the action-card visual language */
+#randomizerCardPreview .tile{flex:none!important;margin:auto!important}
+#randomizerCardPreview .tile:not(.graphic-tile){width:var(--panel-width,150px)!important;min-width:var(--panel-width,150px)!important;max-width:var(--panel-width,150px)!important;height:var(--panel-height,126px)!important;min-height:var(--panel-height,126px)!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#171522;border:1px solid #49355f;border-radius:12px;padding:8px}
+#randomizerCardPreview .tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
+#randomizerCardPreview .tile>b{font-family:var(--font-family,Inter,sans-serif);font-size:var(--text-size,12px);white-space:pre-line;text-align:center;color:#fff;font-weight:700;text-shadow:var(--outline-shadow,none)}
+#randomizerWaitCard .tile{margin:auto!important}
+#randomizerWaitCard .tile:not(.graphic-tile){background:#171522;border:1px solid #49355f;border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#randomizerWaitCard .tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
+#randomizerWaitCard .tile>b{font-family:var(--font-family,Inter,sans-serif);font-size:var(--text-size,12px);color:#fff;font-weight:700;white-space:pre-line;text-align:center;text-shadow:var(--outline-shadow,none)}
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -875,22 +885,20 @@ body.captions-hidden .tile>b{display:none!important}
   <div class="notice hidden" id="randomizerUrlBox" style="margin-top:12px;word-break:break-all"></div>
  </div>
  <div class="panel" id="randomizerCardPanel">
-  <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Отдельное оформление стартовой карточки — не зависит от выбранного набора</div></div><span class="pill">СВОЙ ДИЗАЙН</span></div>
-  <div class="randomizer-card-editor">
-   <div class="formgrid">
-    <div class="field full"><label>Заголовок карточки</label><input id="randomizerCardTitle" maxlength="70" value="ГОТОВ К ВЫБОРУ"></div>
-    <div class="field full"><label>Подзаголовок</label><input id="randomizerCardSubtitle" maxlength="100" value="Нажми кнопку, чтобы запустить рандомайзер"></div>
-    <div class="field"><label>Иконка</label><input id="randomizerCardIcon" maxlength="8" value="🎰"></div>
-    <div class="field"><label>Текст кнопки</label><input id="randomizerCardButton" maxlength="28" value="ЗАПУСК"></div>
-    <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="solid">Объёмная</option><option value="glass">Жидкое стекло</option><option value="neon">Неон</option></select></div>
-    <div class="field"><label>Цвет акцента</label><input id="randomizerCardAccent" type="color" value="#c58cff" style="height:42px;padding:4px"></div>
-    <div class="field"><label>Цвет фона</label><input id="randomizerCardBackground" type="color" value="#21172e" style="height:42px;padding:4px"></div>
-    <div class="field"><label>Ширина: <b class="rangeval" id="randomizerCardWidthVal">320 px</b></label><input id="randomizerCardWidth" type="range" min="180" max="700" value="320"></div>
-    <div class="field"><label>Высота: <b class="rangeval" id="randomizerCardHeightVal">190 px</b></label><input id="randomizerCardHeight" type="range" min="120" max="420" value="190"></div>
-    <div class="field"><label>Размер заголовка: <b class="rangeval" id="randomizerCardFontVal">22 px</b></label><input id="randomizerCardFont" type="range" min="14" max="42" value="22"></div>
-   </div>
-   <div><label>Предпросмотр карточки</label><div class="randomizer-card-preview" id="randomizerCardPreview"></div><div class="sub" style="margin-top:8px">Карточка будет отображаться в оверлее до запуска и после завершения каждого розыгрыша.</div></div>
+  <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Настройка по той же логике, что и карточка действия. Оформление независимо от набора.</div></div><span class="pill">ОТДЕЛЬНАЯ КАРТОЧКА</span></div>
+  <div class="formgrid">
+   <div class="field full"><label>Подарок, который отвечает за карточку</label><div class="row"><select id="randomizerCardGift" class="grow"></select><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"></div></div>
+   <div class="field full"><label>Название карточки (подпись)</label><textarea id="randomizerCardName" maxlength="90" rows="2" style="width:100%;resize:vertical" placeholder="Например: ЗАПУСК РАНДОМАЙЗЕРА"></textarea></div>
+   <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое Стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
+   <div class="field"><label>Индивидуальный цвет бокса</label><input id="randomizerCardColor" type="color" value="#6d83ff" style="height:42px;padding:4px"></div>
+   <div class="field"><label>Ширина карточки: <b class="rangeval" id="randomizerCardWidthVal">150 px</b></label><input id="randomizerCardWidth" type="range" min="90" max="280" value="150"></div>
+   <div class="field"><label>Высота карточки: <b class="rangeval" id="randomizerCardHeightVal">126 px</b></label><input id="randomizerCardHeight" type="range" min="80" max="240" value="126"></div>
+   <div class="field"><label>Размер иконки: <b class="rangeval" id="randomizerCardIconSizeVal">64 px</b></label><input id="randomizerCardIconSize" type="range" min="24" max="150" value="64"></div>
+   <div class="field"><label>Размер подписи: <b class="rangeval" id="randomizerCardTextSizeVal">12 px</b></label><input id="randomizerCardTextSize" type="range" min="8" max="32" value="12"></div>
+   <div class="field"><label>Шрифт подписи</label><select id="randomizerCardFont"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
+   <div class="field"><label>Чёрная обводка текста</label><select id="randomizerCardOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
   </div>
+  <div style="margin-top:14px"><label>Предпросмотр карточки</label><div class="randomizer-card-preview" id="randomizerCardPreview"></div><div class="sub" style="margin-top:8px">Карточка отображается до запуска и возвращается после завершения розыгрыша.</div></div>
  </div>
  <div class="panel">
   <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
@@ -1417,21 +1425,24 @@ function randomizerEntries(set){
  const cfg=set?.randomizer;
  return Array.isArray(cfg?.items)?cfg.items:[];
 }
-const DEFAULT_RANDOMIZER_CARD={title:'ГОТОВ К ВЫБОРУ',subtitle:'Нажми кнопку, чтобы запустить рандомайзер',icon:'🎰',button:'ЗАПУСК',style:'solid',accent:'#c58cff',background:'#21172e',width:320,height:190,font:22};
+const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0};
 function randomizerCardConfig(set){return {...DEFAULT_RANDOMIZER_CARD,...(set?.randomizer?.cardSettings||{})}}
 function randomizerCardMarkup(cfg){
- const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})};
- return `<div class="randomizer-wait-card ${esc(c.style)}" style="--rc-bg:${/^#[0-9a-f]{6}$/i.test(c.background)?c.background:'#21172e'};--rc-accent:${/^#[0-9a-f]{6}$/i.test(c.accent)?c.accent:'#c58cff'};--rc-width:${Math.max(180,Math.min(700,Number(c.width)||320))}px;--rc-height:${Math.max(120,Math.min(420,Number(c.height)||190))}px;--rc-font:${Math.max(14,Math.min(42,Number(c.font)||22))}px"><div class="rc-icon">${esc(c.icon||'🎰')}</div><div class="rc-title">${esc(c.title||DEFAULT_RANDOMIZER_CARD.title)}</div><div class="rc-subtitle">${esc(c.subtitle||'')}</div><div class="rc-button">${esc(c.button||'ЗАПУСК')}</div></div>`;
+ const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})},g=giftById(Number(c.giftIndex))||giftById(0)||{name:'Подарок',src:''};
+ const settings={...defaultSettings(),cardStyle:c.cardStyle||'standard',panelColor:c.panelColor||'#6d83ff',panelWidth:Number(c.panelWidth)||150,panelHeight:Number(c.panelHeight)||126,iconSize:Number(c.iconSize)||64,textSize:Number(c.textSize)||12,fontFamily:c.fontFamily||'Inter, sans-serif',textOutline:Number(c.textOutline)||0,imageMode:'off'};
+ const action={giftIndex:Number(c.giftIndex),action:c.action||'ЗАПУСК РАНДОМАЙЗЕРА'};
+ const icon=triggerIconFor(action,g),caption=esc(action.action).replace(/\n/g,'<br>');
+ const style=settings.cardStyle;
+ const html=(style==='graphic'||style==='tile'||style==='neon')
+  ? `<div class="tile graphic-tile ${style==='neon'?'neon-tile':style==='tile'?'tile-style-tile':'liquid-tile'}" style="--tile-width:${settings.panelWidth}px;--panel-width:${settings.panelWidth}px;--panel-height:${settings.panelHeight}px;--icon-size:${settings.iconSize}px;--text-size:${settings.textSize}px;--font-family:${settings.fontFamily};--panel-hue:${panelHue(settings.panelColor)}deg;--glass-hue:${glassHue(settings.panelColor)}deg"><img class="panel-art" src="${style==='neon'?NEON_ART:style==='tile'?TILE_ART:PANEL_ART}" alt=""><img class="gift-art" src="${esc(icon)}" alt="${esc(g.name)}"><b>${caption}</b></div>`
+  : `<div class="tile" style="--tile-width:${settings.panelWidth}px;--panel-width:${settings.panelWidth}px;--panel-height:${settings.panelHeight}px;--icon-size:${settings.iconSize}px;--text-size:${settings.textSize}px;--font-family:${settings.fontFamily}"><img src="${esc(icon)}" alt="${esc(g.name)}"><b>${caption}</b></div>`;
+ return html;
 }
-function readRandomizerCardControls(){return {title:$('randomizerCardTitle').value,subtitle:$('randomizerCardSubtitle').value,icon:$('randomizerCardIcon').value,button:$('randomizerCardButton').value,style:$('randomizerCardStyle').value,accent:$('randomizerCardAccent').value,background:$('randomizerCardBackground').value,width:+$('randomizerCardWidth').value,height:+$('randomizerCardHeight').value,font:+$('randomizerCardFont').value}}
-function renderRandomizerCardEditor(set){
- const c=randomizerCardConfig(set);
- for(const [id,key] of [['randomizerCardTitle','title'],['randomizerCardSubtitle','subtitle'],['randomizerCardIcon','icon'],['randomizerCardButton','button'],['randomizerCardStyle','style'],['randomizerCardAccent','accent'],['randomizerCardBackground','background'],['randomizerCardWidth','width'],['randomizerCardHeight','height'],['randomizerCardFont','font']])$(id).value=c[key];
- $('randomizerCardWidthVal').textContent=c.width+' px';$('randomizerCardHeightVal').textContent=c.height+' px';$('randomizerCardFontVal').textContent=c.font+' px';
- $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
-}
-function updateRandomizerCardPreview(){const c=readRandomizerCardControls();$('randomizerCardWidthVal').textContent=c.width+' px';$('randomizerCardHeightVal').textContent=c.height+' px';$('randomizerCardFontVal').textContent=c.font+' px';$('randomizerCardPreview').innerHTML=randomizerCardMarkup(c)}
-for(const id of ['randomizerCardTitle','randomizerCardSubtitle','randomizerCardIcon','randomizerCardButton','randomizerCardStyle','randomizerCardAccent','randomizerCardBackground','randomizerCardWidth','randomizerCardHeight','randomizerCardFont'])$(id).addEventListener('input',updateRandomizerCardPreview);
+function readRandomizerCardControls(){return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value};}
+function populateRandomizerGiftSelect(selected){const el=$('randomizerCardGift');if(!el)return;const list=[...SYSTEM_TRIGGERS.map(t=>({id:t.id,name:t.name})),...CATALOG.map((g,i)=>({id:i,name:g.name}))];el.innerHTML=list.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');el.value=String(selected??0);const g=giftById(Number(el.value));$('randomizerCardGiftIcon').src=g?.src||'';}
+function renderRandomizerCardEditor(set){const c=randomizerCardConfig(set);populateRandomizerGiftSelect(c.giftIndex);$('randomizerCardName').value=c.action;$('randomizerCardStyle').value=c.cardStyle;$('randomizerCardColor').value=c.panelColor;$('randomizerCardWidth').value=c.panelWidth;$('randomizerCardHeight').value=c.panelHeight;$('randomizerCardIconSize').value=c.iconSize;$('randomizerCardTextSize').value=c.textSize;$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);updateRandomizerCardPreview();}
+function updateRandomizerCardPreview(){const c=readRandomizerCardControls();for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize]])$(id).textContent=v+' px';const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);const tile=$('randomizerCardPreview').querySelector('.tile');if(tile){tile.style.margin='auto';tile.style.setProperty('--outline-shadow',c.textOutline?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000':'none');}}
+for(const id of ['randomizerCardGift','randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardFont','randomizerCardOutline'])$(id).addEventListener('input',updateRandomizerCardPreview);
 function renderRandomizer(){
  const select=$('randomizerSet');if(!select)return;
  const previous=select.value;
@@ -1826,8 +1837,8 @@ async function randomizerOverlayMode(){
  const publicId=new URLSearchParams(location.search).get('randomizer');
  let lastRunId='',busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null;
  const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
- function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.randomizer-wait-card')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
- function fadeToRoulette(){const card=waitCard.querySelector('.randomizer-wait-card');if(card)card.classList.add('is-hidden');setTimeout(()=>{waitCard.style.display='none';shell.classList.remove('is-hidden');requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')))},650)}
+ function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.tile')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
+ function fadeToRoulette(){const card=waitCard.querySelector('.tile');if(card)card.classList.add('is-hidden');setTimeout(()=>{waitCard.style.display='none';shell.classList.remove('is-hidden');requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')))},650)}
  function returnToWaiting(cfg){shell.classList.remove('is-visible');shell.classList.add('is-hidden');setTimeout(()=>{const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}showWaitingCard(cfg);},650)}
  async function draw(){
   if(busy)return;
@@ -1909,3 +1920,9 @@ function overlayMode(){
 }
 if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode();else if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
 </script></body></html>
+<style>
+#randomizerWaitCard{display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:opacity .65s ease}
+#randomizerWaitCard .tile{transition:opacity .65s ease,transform .65s ease,filter .65s ease;will-change:opacity,transform,filter}
+#randomizerWaitCard .tile.is-hidden{opacity:0;transform:translateY(10px) scale(.97);filter:blur(5px);pointer-events:none}
+.roulette-page .roulette-shell{transition:opacity .65s ease,transform .65s ease,filter .65s ease}
+</style>
