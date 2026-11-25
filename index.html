@@ -765,6 +765,14 @@ body.captions-hidden .tile>b{display:none!important}
 #randomizerWaitCard .tile:not(.graphic-tile){background:#171522;border:1px solid #49355f;border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 #randomizerWaitCard .tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
 #randomizerWaitCard .tile>b{font-family:var(--font-family,Inter,sans-serif);font-size:var(--text-size,12px);color:#fff;font-weight:700;white-space:pre-line;text-align:center;text-shadow:var(--outline-shadow,none)}
+/* Randomizer card editor and image mode refinements */
+#randomizerCardPreview{display:flex;align-items:center;justify-content:center;min-height:190px;padding:18px;background:#000;border:1px solid var(--line);border-radius:12px;overflow:visible}
+#randomizerCardPreview .tile{flex:none}
+#randomizerCardPreview .tile b{font-family:var(--font-family,Inter,sans-serif)!important;font-size:var(--text-size,12px)!important;text-shadow:var(--outline-shadow,none)!important}
+#randomizerCardPreview .tile.image-mode{position:relative!important;display:block!important;width:var(--panel-width,150px)!important;height:var(--panel-height,126px)!important;min-width:var(--panel-width,150px)!important;min-height:var(--panel-height,126px)!important;padding:0!important;background:transparent!important;border:0!important}
+body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!important;height:var(--action-image-size,80px)!important;max-width:none!important;max-height:none!important;object-fit:contain!important}\n#randomizerCardPreview .tile.image-mode .action-art{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:var(--action-image-size,80px)!important;height:var(--action-image-size,80px)!important;max-width:none!important;max-height:none!important;object-fit:contain!important;z-index:2!important}
+#randomizerCardPreview .tile.image-mode .gift-art{position:absolute!important;left:auto!important;right:8px!important;top:8px!important;width:var(--icon-size,64px)!important;height:var(--icon-size,64px)!important;max-width:none!important;max-height:none!important;object-fit:contain!important;z-index:3!important}
+#randomizerCardPreview .tile.image-mode b{position:absolute!important;left:50%!important;bottom:5px!important;top:auto!important;transform:translateX(-50%)!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;text-align:center!important;z-index:4!important}
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -887,10 +895,12 @@ body.captions-hidden .tile>b{display:none!important}
  <div class="panel" id="randomizerCardPanel">
   <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Настройка по той же логике, что и карточка действия. Оформление независимо от набора.</div></div><span class="pill">ОТДЕЛЬНАЯ КАРТОЧКА</span></div>
   <div class="formgrid">
-   <div class="field full"><label>Подарок, который отвечает за карточку</label><div class="row"><select id="randomizerCardGift" class="grow"></select><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"></div></div>
+   <div class="field full"><label>Подарок, который отвечает за карточку</label><div class="row"><input type="hidden" id="randomizerCardGift" value="0"><button type="button" id="openRandomizerGiftCatalog">Выбрать подарок из каталога</button><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"><strong id="randomizerCardGiftName" class="grow">Rose</strong></div></div>
    <div class="field full"><label>Название карточки (подпись)</label><textarea id="randomizerCardName" maxlength="90" rows="2" style="width:100%;resize:vertical" placeholder="Например: ЗАПУСК РАНДОМАЙЗЕРА"></textarea></div>
-   <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое Стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
+   <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
+   <div class="field"><label>Режим отображения</label><select id="randomizerCardImageMode"><option value="off">Без изображения</option><option value="on">С изображением</option></select></div>
    <div class="field"><label>Индивидуальный цвет бокса</label><input id="randomizerCardColor" type="color" value="#6d83ff" style="height:42px;padding:4px"></div>
+   <div class="field full" id="randomizerCardImageUploadField"><label>Изображение карточки</label><div class="row" style="flex-wrap:wrap"><input id="randomizerCardImageFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:340px"><button type="button" id="removeRandomizerCardImage">Удалить изображение</button></div><div class="sub">PNG, JPG или WebP. Изображение будет основным, подарок останется небольшой иконкой в углу.</div><img id="randomizerCardImagePreview" class="hidden" alt="Предпросмотр изображения" style="display:block;max-width:180px;max-height:130px;object-fit:contain;margin-top:10px;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
    <div class="field"><label>Ширина карточки: <b class="rangeval" id="randomizerCardWidthVal">150 px</b></label><input id="randomizerCardWidth" type="range" min="90" max="280" value="150"></div>
    <div class="field"><label>Высота карточки: <b class="rangeval" id="randomizerCardHeightVal">126 px</b></label><input id="randomizerCardHeight" type="range" min="80" max="240" value="126"></div>
    <div class="field"><label>Размер иконки: <b class="rangeval" id="randomizerCardIconSizeVal">64 px</b></label><input id="randomizerCardIconSize" type="range" min="24" max="150" value="64"></div>
@@ -915,6 +925,7 @@ body.captions-hidden .tile>b{display:none!important}
 <div class="footer">Gift Action Builder</div>
 <div class="feedback-footer"><a href="https://t.me/username_fsociety_tt" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✈</span> Обратная связь в Telegram</a></div>
 </main></div></div><div class="toast" id="toast"></div>
+<dialog id="randomizerGiftDialog" class="catalogmodal"><div class="modalhead"><div><b>Каталог подарков</b><div class="sub">Выбери подарок для стартовой карточки рандомайзера</div></div><button type="button" id="closeRandomizerGiftDialog">✕</button></div><div class="modalbody"><label>Поиск подарка по названию</label><input id="randomizerGiftSearch" placeholder="Начни вводить название подарка…"><div class="row" style="margin-top:10px"><label style="margin:0;white-space:nowrap">Сортировка</label><select id="randomizerGiftSort" style="max-width:260px"><option value="priceAsc">От дешёвых к дорогим</option><option value="name">По алфавиту</option><option value="priceDesc">Сначала дорогие</option></select></div><div class="sub" id="randomizerGiftCount" style="margin-top:8px"></div><div class="cataloggrid" id="randomizerGiftGrid" style="max-height:62vh"></div></div></dialog>
 <dialog id="actionDialog" class="catalogmodal"><div class="modalhead"><div><b id="dialogTitle">Добавить действие</b><div class="sub">Сначала выбери подарок из каталога TikTok</div></div><button id="closeDialog">✕</button></div><div class="modalbody">
 <div id="giftSelectStep"><label>Поиск подарка по названию</label><input id="catalogSearch" placeholder="Начни вводить название подарка…"><div class="row" style="margin-top:10px"><label style="margin:0;white-space:nowrap">Сортировка</label><select id="catalogSort" style="max-width:260px"><option value="priceAsc" selected>От дешёвых к дорогим</option><option value="name">По алфавиту</option><option value="priceDesc">Сначала дорогие</option></select></div><div class="sub" id="catalogCount" style="margin-top:6px">В каталоге 1 116 подарков и 3 системных триггера</div><div class="cataloggrid" id="catalogGrid"></div></div>
 <div id="actionStep" class="hidden"><div class="selectedgift" id="chosenGift"></div>
@@ -1425,24 +1436,78 @@ function randomizerEntries(set){
  const cfg=set?.randomizer;
  return Array.isArray(cfg?.items)?cfg.items:[];
 }
-const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0};
+const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0,imageMode:'off',imageUrl:''};
 function randomizerCardConfig(set){return {...DEFAULT_RANDOMIZER_CARD,...(set?.randomizer?.cardSettings||{})}}
 function randomizerCardMarkup(cfg){
  const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})},g=giftById(Number(c.giftIndex))||giftById(0)||{name:'Подарок',src:''};
- const settings={...defaultSettings(),cardStyle:c.cardStyle||'standard',panelColor:c.panelColor||'#6d83ff',panelWidth:Number(c.panelWidth)||150,panelHeight:Number(c.panelHeight)||126,iconSize:Number(c.iconSize)||64,textSize:Number(c.textSize)||12,fontFamily:c.fontFamily||'Inter, sans-serif',textOutline:Number(c.textOutline)||0,imageMode:'off'};
- const action={giftIndex:Number(c.giftIndex),action:c.action||'ЗАПУСК РАНДОМАЙЗЕРА'};
- const icon=triggerIconFor(action,g),caption=esc(action.action).replace(/\n/g,'<br>');
- const style=settings.cardStyle;
- const html=(style==='graphic'||style==='tile'||style==='neon')
-  ? `<div class="tile graphic-tile ${style==='neon'?'neon-tile':style==='tile'?'tile-style-tile':'liquid-tile'}" style="--tile-width:${settings.panelWidth}px;--panel-width:${settings.panelWidth}px;--panel-height:${settings.panelHeight}px;--icon-size:${settings.iconSize}px;--text-size:${settings.textSize}px;--font-family:${settings.fontFamily};--panel-hue:${panelHue(settings.panelColor)}deg;--glass-hue:${glassHue(settings.panelColor)}deg"><img class="panel-art" src="${style==='neon'?NEON_ART:style==='tile'?TILE_ART:PANEL_ART}" alt=""><img class="gift-art" src="${esc(icon)}" alt="${esc(g.name)}"><b>${caption}</b></div>`
-  : `<div class="tile" style="--tile-width:${settings.panelWidth}px;--panel-width:${settings.panelWidth}px;--panel-height:${settings.panelHeight}px;--icon-size:${settings.iconSize}px;--text-size:${settings.textSize}px;--font-family:${settings.fontFamily}"><img src="${esc(icon)}" alt="${esc(g.name)}"><b>${caption}</b></div>`;
- return html;
+ const style=c.cardStyle||'standard',imageMode=c.imageMode==='on'&&!!c.imageUrl;
+ const icon=triggerIconFor({giftIndex:Number(c.giftIndex)},g);
+ const caption=esc(c.action||'ЗАПУСК РАНДОМАЙЗЕРА').replace(/\n/g,'<br>');
+ const common=`--action-image-size:${Number(c.iconSize)||64}px;--tile-width:${Number(c.panelWidth)||150}px;--panel-width:${Number(c.panelWidth)||150}px;--panel-height:${Number(c.panelHeight)||126}px;--icon-size:${Number(c.iconSize)||64}px;--text-size:${Number(c.textSize)||12}px;--font-family:${c.fontFamily||'Inter, sans-serif'};--panel-hue:${panelHue(c.panelColor||'#6d83ff')}deg;--glass-hue:${glassHue(c.panelColor||'#6d83ff')}deg;--outline-shadow:${Number(c.textOutline)?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none'}`;
+ const imageArt=imageMode?`<img class="action-art" src="${esc(c.imageUrl)}" alt="">`:'';
+ const giftArt=`<img class="gift-art" src="${esc(icon)}" alt="${esc(g.name)}">`;
+ const graphic=['graphic','tile','neon'].includes(style);
+ const classes=`tile${graphic?' graphic-tile':''}${imageMode?' image-mode':''} ${style==='neon'?'neon-tile':style==='tile'?'tile-style-tile':style==='graphic'?'liquid-tile':''}`;
+ const art=graphic?`<img class="panel-art" data-panel-color="${esc(c.panelColor||'#6d83ff')}" src="${style==='neon'?NEON_ART:style==='tile'?TILE_ART:PANEL_ART}" alt="">`:'';
+ return `<div class="${classes}" data-panel-color="${esc(c.panelColor||'#6d83ff')}" style="${common};${graphic?'':'background:linear-gradient(145deg,'+(c.panelColor||'#6d83ff')+'55,'+(c.panelColor||'#6d83ff')+'18);border:1px solid '+(c.panelColor||'#6d83ff')+';border-radius:12px;padding:10px;'}"">${art}${imageArt}${giftArt}<b style="text-shadow:var(--outline-shadow)">${caption}</b></div>`;
 }
-function readRandomizerCardControls(){return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value};}
-function populateRandomizerGiftSelect(selected){const el=$('randomizerCardGift');if(!el)return;const list=[...SYSTEM_TRIGGERS.map(t=>({id:t.id,name:t.name})),...CATALOG.map((g,i)=>({id:i,name:g.name}))];el.innerHTML=list.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');el.value=String(selected??0);const g=giftById(Number(el.value));$('randomizerCardGiftIcon').src=g?.src||'';}
-function renderRandomizerCardEditor(set){const c=randomizerCardConfig(set);populateRandomizerGiftSelect(c.giftIndex);$('randomizerCardName').value=c.action;$('randomizerCardStyle').value=c.cardStyle;$('randomizerCardColor').value=c.panelColor;$('randomizerCardWidth').value=c.panelWidth;$('randomizerCardHeight').value=c.panelHeight;$('randomizerCardIconSize').value=c.iconSize;$('randomizerCardTextSize').value=c.textSize;$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);updateRandomizerCardPreview();}
-function updateRandomizerCardPreview(){const c=readRandomizerCardControls();for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize]])$(id).textContent=v+' px';const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);const tile=$('randomizerCardPreview').querySelector('.tile');if(tile){tile.style.margin='auto';tile.style.setProperty('--outline-shadow',c.textOutline?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000':'none');}}
-for(const id of ['randomizerCardGift','randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardFont','randomizerCardOutline'])$(id).addEventListener('input',updateRandomizerCardPreview);
+function readRandomizerCardControls(){
+ return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value,imageMode:$('randomizerCardImageMode').value,imageUrl:randomizerCardImageUrl||''};
+}
+function populateRandomizerGiftSelect(selected){
+ const el=$('randomizerCardGift');if(!el)return;
+ el.value=String(selected??0);
+ const g=giftById(Number(el.value));
+ $('randomizerCardGiftIcon').src=g?.src||'';
+ $('randomizerCardGiftName').textContent=g?.name||'Подарок не выбран';
+}
+function renderRandomizerCardEditor(set){
+ const c=randomizerCardConfig(set);
+ randomizerCardImageUrl=c.imageUrl||'';randomizerCardPendingImage=null;randomizerCardRemoveImage=false;
+ populateRandomizerGiftSelect(c.giftIndex);
+ $('randomizerCardName').value=c.action;$('randomizerCardStyle').value=c.cardStyle;$('randomizerCardColor').value=c.panelColor;
+ $('randomizerCardWidth').value=c.panelWidth;$('randomizerCardHeight').value=c.panelHeight;$('randomizerCardIconSize').value=c.iconSize;
+ $('randomizerCardTextSize').value=c.textSize;$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);
+ $('randomizerCardImageMode').value=c.imageMode||'off';
+ setRandomizerCardImagePreview(randomizerCardImageUrl);
+ updateRandomizerCardPreview();
+}
+function setRandomizerCardImagePreview(url){
+ const img=$('randomizerCardImagePreview'),remove=$('removeRandomizerCardImage');
+ if(url){img.src=url;img.classList.remove('hidden');remove.disabled=false}
+ else{img.removeAttribute('src');img.classList.add('hidden');remove.disabled=true}
+}
+function updateRandomizerCardPreview(){
+ const c=readRandomizerCardControls();
+ for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize]])$(id).textContent=v+' px';
+ const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardGiftName').textContent=g?.name||'Подарок не выбран';
+ $('randomizerCardImageUploadField').classList.toggle('hidden',c.imageMode!=='on');
+ $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
+ const tile=$('randomizerCardPreview').querySelector('.tile');if(tile){tile.style.margin='auto';tile.style.setProperty('--outline-shadow',c.textOutline?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none');}
+ if(typeof ensureGlassTintObserver==='function')ensureGlassTintObserver();
+}
+let randomizerCardImageUrl='',randomizerCardPendingImage=null,randomizerCardRemoveImage=false;
+for(const id of ['randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardFont','randomizerCardOutline','randomizerCardImageMode'])$(id).addEventListener('input',updateRandomizerCardPreview);
+$('openRandomizerGiftCatalog').onclick=()=>{$('randomizerGiftSearch').value='';$('randomizerGiftSort').value='priceAsc';drawRandomizerGiftCatalog();$('randomizerGiftDialog').showModal()};
+$('closeRandomizerGiftDialog').onclick=()=>$('randomizerGiftDialog').close();
+function drawRandomizerGiftCatalog(){
+ const q=$('randomizerGiftSearch').value.trim().toLocaleLowerCase();
+ const system=SYSTEM_TRIGGERS.map(t=>({id:t.id,g:{name:t.name,src:systemTriggerIcon(t.type,t.defaultValue)}})).filter(x=>!q||x.g.name.toLocaleLowerCase().includes(q));
+ const normal=CATALOG.map((g,i)=>({id:i,g})).filter(x=>!q||x.g.name.toLocaleLowerCase().includes(q));
+ const sort=$('randomizerGiftSort').value;
+ normal.sort((a,b)=>{const pa=giftPrice(a.g.name),pb=giftPrice(b.g.name);if(sort==='priceAsc')return (pa??Infinity)-(pb??Infinity)||a.g.name.localeCompare(b.g.name,'ru');if(sort==='priceDesc')return (pb??-Infinity)-(pa??-Infinity)||a.g.name.localeCompare(b.g.name,'ru');return a.g.name.localeCompare(b.g.name,'ru')});
+ const all=[...system,...normal],known=all.filter(x=>giftPrice(x.g.name)!==null).length;
+ $('randomizerGiftCount').textContent=`Показано ${all.length} подарков · ${system.length} системных триггера · цены найдены для ${known} позиций`;
+ $('randomizerGiftGrid').innerHTML=all.length?all.map(x=>{const price=giftPrice(x.g.name);return `<button type="button" class="catalogitem" data-randomizer-pick="${x.id}"><img loading="lazy" src="${esc(x.g.src)}" alt=""><span>${esc(x.g.name)}</span><small class="gift-price">${price===null?'Цена не найдена':price+' 🪙'}</small></button>`}).join(''):'<div class="empty">Ничего не найдено.</div>';
+}
+$('randomizerGiftSearch').oninput=drawRandomizerGiftCatalog;$('randomizerGiftSort').onchange=drawRandomizerGiftCatalog;
+$('randomizerGiftGrid').onclick=e=>{const b=e.target.closest('[data-randomizer-pick]');if(!b)return;populateRandomizerGiftSelect(Number(b.dataset.randomizerPick));updateRandomizerCardPreview();$('randomizerGiftDialog').close()};
+$('randomizerCardImageFile').onchange=async()=>{
+ const file=$('randomizerCardImageFile').files?.[0];if(!file)return;
+ try{const optimized=await optimizeActionImage(file);if(randomizerCardPendingImage?.preview)URL.revokeObjectURL(randomizerCardPendingImage.preview);randomizerCardPendingImage=optimized;randomizerCardRemoveImage=false;randomizerCardImageUrl=optimized.preview;setRandomizerCardImagePreview(optimized.preview);updateRandomizerCardPreview();toast(`Изображение подготовлено: ${optimized.width} × ${optimized.height}`)}
+ catch(e){$('randomizerCardImageFile').value='';toast(e.message||'Ошибка обработки изображения')}
+};
+$('removeRandomizerCardImage').onclick=()=>{if(randomizerCardPendingImage?.preview)URL.revokeObjectURL(randomizerCardPendingImage.preview);randomizerCardPendingImage=null;randomizerCardImageUrl='';randomizerCardRemoveImage=true;$('randomizerCardImageFile').value='';setRandomizerCardImagePreview(null);updateRandomizerCardPreview()};
 function renderRandomizer(){
  const select=$('randomizerSet');if(!select)return;
  const previous=select.value;
@@ -1523,7 +1588,14 @@ $('saveRandomizer').onclick=async()=>{
  const items=collectRandomizerItems(),total=items.reduce((n,x)=>n+x.weight,0);
  if(!items.length||total>100){toast('Выбери карточки. Сумма весов должна быть от 1% до 100%.');return}
  state.activeSet=set.id;activateSetSettings(set);
- set.randomizer={...(set.randomizer||{}),name:$('randomizerName').value.trim()||set.name+' — Рандомайзер',items,cardSettings:readRandomizerCardControls(),updatedAt:new Date().toISOString()};
+ const cardSettings=readRandomizerCardControls();
+ if(randomizerCardPendingImage){
+  try{const uploaded=await uploadActionImage(randomizerCardPendingImage.blob);cardSettings.imageUrl=uploaded;randomizerCardImageUrl=uploaded;URL.revokeObjectURL(randomizerCardPendingImage.preview);randomizerCardPendingImage=null;setRandomizerCardImagePreview(uploaded)}
+  catch(e){toast(e.message||'Не удалось загрузить изображение карточки');return}
+ }
+ if(randomizerCardRemoveImage&&randomizerCardConfig(set).imageUrl)await deleteActionImageByUrl(randomizerCardConfig(set).imageUrl);
+ if(randomizerCardRemoveImage)cardSettings.imageUrl='';
+ set.randomizer={...(set.randomizer||{}),name:$('randomizerName').value.trim()||set.name+' — Рандомайзер',items,cardSettings,updatedAt:new Date().toISOString()};
  localStorage.setItem(STORE,JSON.stringify(state));
  if(!currentUser){toast('Для отдельного Overlay войди в аккаунт и сохрани набор в облако');renderRandomizer();return}
  const saved=await cloudSaveActive(false);
