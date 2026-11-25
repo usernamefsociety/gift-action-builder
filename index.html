@@ -737,6 +737,23 @@ body.captions-hidden .tile>b{display:none!important}
 .roulette-page.has-winner .roulette-winner-label{opacity:1}
 .roulette-empty{color:#fff;text-align:center;font:600 18px Inter,sans-serif;padding:30px}
 @media(max-width:700px){.randomizer-item{grid-template-columns:28px 42px minmax(0,1fr) 86px;gap:7px}.randomizer-item .r-prob{grid-column:3/5;text-align:left}.randomizer-item img{width:40px;height:40px}.randomizer-launch{align-items:stretch;flex-direction:column}.randomizer-launch button{width:100%}}
+/* Independent randomizer waiting card */
+.randomizer-card-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.75fr);gap:18px;align-items:start}
+.randomizer-card-preview{min-height:230px;display:grid;place-items:center;background:#08070d;border:1px solid var(--line);border-radius:13px;padding:20px;overflow:hidden}
+.randomizer-wait-card{--rc-bg:#21172e;--rc-accent:#c58cff;--rc-width:320px;--rc-height:190px;--rc-font:22px;width:min(var(--rc-width),100%);min-height:var(--rc-height);box-sizing:border-box;border:1px solid color-mix(in srgb,var(--rc-accent),white 22%);border-radius:20px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;color:#fff;background:linear-gradient(145deg,color-mix(in srgb,var(--rc-bg),white 8%),var(--rc-bg));box-shadow:0 16px 50px #0008;font-family:Inter,sans-serif;transition:opacity .65s ease,transform .65s ease,filter .65s ease}
+.randomizer-wait-card.glass{background:linear-gradient(135deg,#ffffff2c,#ffffff08 42%,#ffffff20);backdrop-filter:blur(18px);box-shadow:inset 0 1px 1px #fff7,0 16px 50px #0008}
+.randomizer-wait-card.neon{box-shadow:0 0 0 1px var(--rc-accent),0 0 26px color-mix(in srgb,var(--rc-accent),transparent 38%),inset 0 0 28px color-mix(in srgb,var(--rc-accent),transparent 83%)}
+.randomizer-wait-card .rc-icon{font-size:42px;line-height:1}.randomizer-wait-card .rc-title{font-size:var(--rc-font);font-weight:800;line-height:1.2;overflow-wrap:anywhere}.randomizer-wait-card .rc-subtitle{font-size:14px;color:#ffffffbd;line-height:1.4;overflow-wrap:anywhere}.randomizer-wait-card .rc-button{margin-top:4px;padding:9px 18px;border-radius:99px;background:var(--rc-accent);color:#171020;font-weight:800;font-size:12px;letter-spacing:.04em}
+#randomizerCardPreview .randomizer-wait-card{pointer-events:none}
+.roulette-page{gap:22px;flex-direction:column;padding:24px;box-sizing:border-box}
+.roulette-page .randomizer-wait-card{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+.roulette-page .randomizer-wait-card.is-hidden{opacity:0;transform:translateY(10px) scale(.97);filter:blur(5px);pointer-events:none}
+.roulette-shell{opacity:0;transform:translateY(12px) scale(.985);filter:blur(5px);transition:opacity .65s ease,transform .65s ease,filter .65s ease;pointer-events:none}
+.roulette-shell.is-visible{opacity:1;transform:translateY(0) scale(1);filter:blur(0);pointer-events:auto}
+.roulette-shell.is-hidden{opacity:0;transform:translateY(-8px) scale(.985);filter:blur(5px)}
+@media(max-width:700px){.randomizer-card-editor{grid-template-columns:1fr}.randomizer-wait-card{--rc-width:280px}}
+@media(prefers-reduced-motion:reduce){.randomizer-wait-card,.roulette-shell{transition-duration:.12s}}
+
 
 </style></head><body>
 <div id="app" class="app">
@@ -847,7 +864,7 @@ body.captions-hidden .tile>b{display:none!important}
    <div class="field"><label>Набор действий</label><select id="randomizerSet"></select></div>
    <div class="field"><label>Название рандомайзера</label><input id="randomizerName" maxlength="60" placeholder="Например: Испытание на стриме"></div>
   </div>
-  <div class="notice" style="margin-top:12px">Выбери карточки и задай каждой вес от 1% до 100%. Сумма весов не может превышать 100%. При запуске веса автоматически нормализуются: победитель выпадет обязательно.</div>
+  <div class="notice" style="margin-top:12px">Выбери карточки и задай каждой вес от 1% до 100%. Сумма весов не может превышать 100%. При запуске веса автоматически нормализуются: победитель выпадет обязательно. Настрой стартовую карточку отдельно ниже.</div>
   <div id="randomizerItems" class="randomizer-items" style="margin-top:14px"></div>
   <div class="randomizer-total"><span>Сумма заданных весов</span><strong id="randomizerTotal">0%</strong><span class="muted" id="randomizerTotalHint">Выбери хотя бы одну карточку</span></div>
   <div class="actions" style="margin-top:14px">
@@ -856,6 +873,24 @@ body.captions-hidden .tile>b{display:none!important}
    <button id="openRandomizerUrl" disabled>Открыть Overlay</button>
   </div>
   <div class="notice hidden" id="randomizerUrlBox" style="margin-top:12px;word-break:break-all"></div>
+ </div>
+ <div class="panel" id="randomizerCardPanel">
+  <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Отдельное оформление стартовой карточки — не зависит от выбранного набора</div></div><span class="pill">СВОЙ ДИЗАЙН</span></div>
+  <div class="randomizer-card-editor">
+   <div class="formgrid">
+    <div class="field full"><label>Заголовок карточки</label><input id="randomizerCardTitle" maxlength="70" value="ГОТОВ К ВЫБОРУ"></div>
+    <div class="field full"><label>Подзаголовок</label><input id="randomizerCardSubtitle" maxlength="100" value="Нажми кнопку, чтобы запустить рандомайзер"></div>
+    <div class="field"><label>Иконка</label><input id="randomizerCardIcon" maxlength="8" value="🎰"></div>
+    <div class="field"><label>Текст кнопки</label><input id="randomizerCardButton" maxlength="28" value="ЗАПУСК"></div>
+    <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="solid">Объёмная</option><option value="glass">Жидкое стекло</option><option value="neon">Неон</option></select></div>
+    <div class="field"><label>Цвет акцента</label><input id="randomizerCardAccent" type="color" value="#c58cff" style="height:42px;padding:4px"></div>
+    <div class="field"><label>Цвет фона</label><input id="randomizerCardBackground" type="color" value="#21172e" style="height:42px;padding:4px"></div>
+    <div class="field"><label>Ширина: <b class="rangeval" id="randomizerCardWidthVal">320 px</b></label><input id="randomizerCardWidth" type="range" min="180" max="700" value="320"></div>
+    <div class="field"><label>Высота: <b class="rangeval" id="randomizerCardHeightVal">190 px</b></label><input id="randomizerCardHeight" type="range" min="120" max="420" value="190"></div>
+    <div class="field"><label>Размер заголовка: <b class="rangeval" id="randomizerCardFontVal">22 px</b></label><input id="randomizerCardFont" type="range" min="14" max="42" value="22"></div>
+   </div>
+   <div><label>Предпросмотр карточки</label><div class="randomizer-card-preview" id="randomizerCardPreview"></div><div class="sub" style="margin-top:8px">Карточка будет отображаться в оверлее до запуска и после завершения каждого розыгрыша.</div></div>
+  </div>
  </div>
  <div class="panel">
   <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
@@ -1382,6 +1417,21 @@ function randomizerEntries(set){
  const cfg=set?.randomizer;
  return Array.isArray(cfg?.items)?cfg.items:[];
 }
+const DEFAULT_RANDOMIZER_CARD={title:'ГОТОВ К ВЫБОРУ',subtitle:'Нажми кнопку, чтобы запустить рандомайзер',icon:'🎰',button:'ЗАПУСК',style:'solid',accent:'#c58cff',background:'#21172e',width:320,height:190,font:22};
+function randomizerCardConfig(set){return {...DEFAULT_RANDOMIZER_CARD,...(set?.randomizer?.cardSettings||{})}}
+function randomizerCardMarkup(cfg){
+ const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})};
+ return `<div class="randomizer-wait-card ${esc(c.style)}" style="--rc-bg:${/^#[0-9a-f]{6}$/i.test(c.background)?c.background:'#21172e'};--rc-accent:${/^#[0-9a-f]{6}$/i.test(c.accent)?c.accent:'#c58cff'};--rc-width:${Math.max(180,Math.min(700,Number(c.width)||320))}px;--rc-height:${Math.max(120,Math.min(420,Number(c.height)||190))}px;--rc-font:${Math.max(14,Math.min(42,Number(c.font)||22))}px"><div class="rc-icon">${esc(c.icon||'🎰')}</div><div class="rc-title">${esc(c.title||DEFAULT_RANDOMIZER_CARD.title)}</div><div class="rc-subtitle">${esc(c.subtitle||'')}</div><div class="rc-button">${esc(c.button||'ЗАПУСК')}</div></div>`;
+}
+function readRandomizerCardControls(){return {title:$('randomizerCardTitle').value,subtitle:$('randomizerCardSubtitle').value,icon:$('randomizerCardIcon').value,button:$('randomizerCardButton').value,style:$('randomizerCardStyle').value,accent:$('randomizerCardAccent').value,background:$('randomizerCardBackground').value,width:+$('randomizerCardWidth').value,height:+$('randomizerCardHeight').value,font:+$('randomizerCardFont').value}}
+function renderRandomizerCardEditor(set){
+ const c=randomizerCardConfig(set);
+ for(const [id,key] of [['randomizerCardTitle','title'],['randomizerCardSubtitle','subtitle'],['randomizerCardIcon','icon'],['randomizerCardButton','button'],['randomizerCardStyle','style'],['randomizerCardAccent','accent'],['randomizerCardBackground','background'],['randomizerCardWidth','width'],['randomizerCardHeight','height'],['randomizerCardFont','font']])$(id).value=c[key];
+ $('randomizerCardWidthVal').textContent=c.width+' px';$('randomizerCardHeightVal').textContent=c.height+' px';$('randomizerCardFontVal').textContent=c.font+' px';
+ $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
+}
+function updateRandomizerCardPreview(){const c=readRandomizerCardControls();$('randomizerCardWidthVal').textContent=c.width+' px';$('randomizerCardHeightVal').textContent=c.height+' px';$('randomizerCardFontVal').textContent=c.font+' px';$('randomizerCardPreview').innerHTML=randomizerCardMarkup(c)}
+for(const id of ['randomizerCardTitle','randomizerCardSubtitle','randomizerCardIcon','randomizerCardButton','randomizerCardStyle','randomizerCardAccent','randomizerCardBackground','randomizerCardWidth','randomizerCardHeight','randomizerCardFont'])$(id).addEventListener('input',updateRandomizerCardPreview);
 function renderRandomizer(){
  const select=$('randomizerSet');if(!select)return;
  const previous=select.value;
@@ -1389,6 +1439,7 @@ function renderRandomizer(){
  select.value=state.sets.some(s=>String(s.id)===previous)?previous:String(active()?.id||state.sets[0]?.id||'');
  const set=randomizerSet();if(!set)return;
  const cfg=set.randomizer||{};
+ renderRandomizerCardEditor(set);
  $('randomizerName').value=cfg.name||set.name+' — Рандомайзер';
  const saved=new Map(randomizerEntries(set).map(x=>[String(x.actionId),Number(x.weight)||1]));
  $('randomizerItems').innerHTML=set.actions.length?set.actions.map(a=>{
@@ -1461,7 +1512,7 @@ $('saveRandomizer').onclick=async()=>{
  const items=collectRandomizerItems(),total=items.reduce((n,x)=>n+x.weight,0);
  if(!items.length||total>100){toast('Выбери карточки. Сумма весов должна быть от 1% до 100%.');return}
  state.activeSet=set.id;activateSetSettings(set);
- set.randomizer={...(set.randomizer||{}),name:$('randomizerName').value.trim()||set.name+' — Рандомайзер',items,updatedAt:new Date().toISOString()};
+ set.randomizer={...(set.randomizer||{}),name:$('randomizerName').value.trim()||set.name+' — Рандомайзер',items,cardSettings:readRandomizerCardControls(),updatedAt:new Date().toISOString()};
  localStorage.setItem(STORE,JSON.stringify(state));
  if(!currentUser){toast('Для отдельного Overlay войди в аккаунт и сохрани набор в облако');renderRandomizer();return}
  const saved=await cloudSaveActive(false);
@@ -1770,55 +1821,53 @@ async function randomizerOverlayMode(){
  document.body.className='overlay';
  const app=$('app');if(app)app.remove();const toastEl=$('toast');if(toastEl)toastEl.remove();
  const root=document.createElement('div');root.className='roulette-page';
- root.innerHTML='<div class="roulette-shell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div></div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div>';
+ root.innerHTML='<div id="randomizerWaitCard"></div><div class="roulette-shell is-hidden" id="rouletteShell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div></div>';
  document.body.append(root);
  const publicId=new URLSearchParams(location.search).get('randomizer');
- let lastRunId='',busy=false;
+ let lastRunId='',busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null;
+ const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
+ function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.randomizer-wait-card')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
+ function fadeToRoulette(){const card=waitCard.querySelector('.randomizer-wait-card');if(card)card.classList.add('is-hidden');setTimeout(()=>{waitCard.style.display='none';shell.classList.remove('is-hidden');requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')))},650)}
+ function returnToWaiting(cfg){shell.classList.remove('is-visible');shell.classList.add('is-hidden');setTimeout(()=>{const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}showWaitingCard(cfg);},650)}
  async function draw(){
+  if(busy)return;
   const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
-  if(error||!data){root.innerHTML='<div class="roulette-empty">Не удалось загрузить рандомайзер</div>';return}
-  const cfg=data.config||{},rand=cfg.randomizer||{};
+  if(error||!data){if(!latestData)root.innerHTML='<div class="roulette-empty">Не удалось загрузить рандомайзер</div>';return}
+  latestData=data;
+  const cfg=data.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
   const allActions=cfg.actions||[],items=rand.items||[];
   const selected=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))})).filter(x=>x.action);
   if(!selected.length){root.innerHTML='<div class="roulette-empty">Рандомайзер ещё не настроен</div>';return}
+  showWaitingCard(cardCfg);
   state={activeSet:'roulette',sets:[{id:'roulette',name:data.title,actions:selected.map(x=>({...x.action,hidden:false})),settings:{...defaultSettings(),...(cfg.settings||{})}}],settings:{...defaultSettings(),...(cfg.settings||{})}};
   const track=$('rouletteTrack');if(!track)return;
+  const markup=tickerMarkup(),cards=Array.from((()=>{const d=document.createElement('div');d.innerHTML=markup;return d})().children);
   if(!track.children.length){
-   const markup=tickerMarkup();
-   const cards=Array.from((()=>{const d=document.createElement('div');d.innerHTML=markup;return d})().children);
-   const sequence=[];
-   for(let i=0;i<24;i++)sequence.push(...cards.map(c=>c.cloneNode(true)));
-   track.innerHTML=sequence.map(c=>c.outerHTML).join('');
-   applyStyle(track);recolorGlassIn(track);
+   const sequence=[];for(let i=0;i<24;i++)sequence.push(...cards.map(c=>c.cloneNode(true)));
+   track.innerHTML=sequence.map(c=>c.outerHTML).join('');applyStyle(track);recolorGlassIn(track);
    const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100);
-   track.style.setProperty('--roulette-card-width',cardWidth+'px');
-   track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+   track.style.setProperty('--roulette-card-width',cardWidth+'px');track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
   }
   if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
-   lastRunId=rand.run.id;busy=true;
+   lastRunId=rand.run.id;busy=true;fadeToRoulette();
    const winnerIndex=selected.findIndex(x=>String(x.action.id)===String(rand.run.winnerActionId));
    if(winnerIndex<0){busy=false;return}
-   const cards=[...track.children],n=selected.length,cycle=21;
-   const target=cycle*n+winnerIndex,card=cards[target],windowEl=$('rouletteWindow');
+   const nodes=[...track.children],n=selected.length,cycle=21,target=cycle*n+winnerIndex,card=nodes[target],windowEl=$('rouletteWindow');
    if(!card){busy=false;return}
-   track.style.transition='none';
-   const first=cards[0],startX=first.offsetLeft+first.offsetWidth/2-windowEl.clientWidth/2;
-   track.style.transform=`translateX(${-startX}px)`;
-   void track.offsetWidth;
+   const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');
+   track.style.transition='none';track.style.transform='translateX(0)';
+   const startX=nodes[0].offsetLeft+nodes[0].offsetWidth/2-windowEl.clientWidth/2;
+   track.style.transform=`translateX(${-startX}px)`;void track.offsetWidth;
    const endX=card.offsetLeft+card.offsetWidth/2-windowEl.clientWidth/2;
-   requestAnimationFrame(()=>{
-    track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
-    track.style.transform=`translateX(${-endX}px)`;
-   });
-   setTimeout(()=>{
-    const frame=$('rouletteWinnerFrame');
+   requestAnimationFrame(()=>{track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';track.style.transform=`translateX(${-endX}px)`});
+   spinTimer=setTimeout(()=>{
     if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px'}
     root.classList.add('has-winner');
-    busy=false;
+    resultTimer=setTimeout(()=>{returnToWaiting(cardCfg);returnTimer=setTimeout(()=>{busy=false;},700)},3000);
    },7350);
   }
  }
- await draw();setInterval(draw,900);
+ await draw();setInterval(draw,500);
 }
 
 function overlayMode(){
