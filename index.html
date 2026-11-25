@@ -937,10 +937,19 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 .roulette-page .roulette-track,
 .randomizer-preview-track{background:transparent!important}
 </style>
-</head><body>
+<style>
+/* Randomizer navigation and compact disclosure controls */
+.nav button[data-tab="randomizer"]{letter-spacing:.1px}
+.randomizer-fold>summary{cursor:pointer;list-style:none;position:relative;padding-right:28px}
+.randomizer-fold>summary::-webkit-details-marker{display:none}
+.randomizer-fold>summary:after{content:"＋";position:absolute;right:2px;top:0;color:var(--muted);font-size:16px;line-height:1}
+.randomizer-fold[open]>summary:after{content:"−"}
+.randomizer-items-fold{padding:12px;border:1px solid var(--line);border-radius:12px;background:#100e18}
+.randomizer-items-fold>summary{font-weight:600;color:var(--text)}
+</style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
-<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button><button data-tab="randomizer">🎰 Рандомайзер</button><button id="adminNav" data-tab="adminTab" class="hidden">⚙ Администрирование</button></div><div class="hint"></div></aside>
+<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button><button data-tab="randomizer">✧ Рандомайзер</button><button id="adminNav" data-tab="adminTab" class="hidden">⚙ Администрирование</button></div><div class="hint"></div></aside>
 <main class="main">
 <section class="panel" id="accountPanel"><div class="panelhead"><div><h2>Облачный аккаунт</h2><div class="sub" id="authStatus">Войди или зарегистрируйся, чтобы сохранять наборы в облаке</div></div><div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-end"><span class="pill" id="cloudBadge">Локальный режим</span><span class="pill" id="planBadge">FREE</span></div></div><div class="formgrid"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Пароль</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 8 символов"></div></div><div class="actions" style="margin-top:12px"><button class="primary" id="signInBtn">Войти</button><button id="signUpBtn">Создать аккаунт</button><button id="signOutBtn" class="hidden">Выйти</button><button id="cloudLoadBtn" class="hidden">Загрузить мои наборы</button></div><div class="sub" id="planDescription" style="margin-top:9px">FREE: до 5 карточек и 1 облачного набора. PRO открывает все функции.</div></section>
 <section class="tab hidden" id="adminTab">
@@ -1041,13 +1050,24 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 
 <section id="randomizer" class="tab hidden">
  <div class="panel">
+  <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
+  <div class="randomizer-launch">
+   <div><div class="muted small">Последний результат</div><strong id="randomizerWinner">Пока нет результатов</strong></div>
+   <button class="primary" id="launchRandomizer" disabled>▶ Запуск</button>
+  </div>
+  <div class="sub" id="randomizerLaunchHint" style="margin-top:10px">Сначала сохрани рандомайзер и открой Overlay в OBS или TikTok Live Studio.</div>
+ </div>
+ <div class="panel">
   <div class="panelhead"><div><h2>Рандомайзер</h2><div class="sub">Создай рулетку из карточек любого сохранённого набора</div></div><span class="pill">BETA</span></div>
   <div class="formgrid">
    <div class="field"><label>Набор действий</label><select id="randomizerSet"></select></div>
    <div class="field"><label>Название рандомайзера</label><input id="randomizerName" maxlength="60" placeholder="Например: Испытание на стриме"></div>
   </div>
   <div class="notice" style="margin-top:12px">Выбери карточки и задай каждой вес от 1% до 100%. Сумма весов не может превышать 100%. При запуске веса автоматически нормализуются: победитель выпадет обязательно. Настрой стартовую карточку отдельно ниже.</div>
-  <div id="randomizerItems" class="randomizer-items" style="margin-top:14px"></div>
+  <details class="field full randomizer-fold randomizer-items-fold" style="margin-top:14px">
+   <summary>Карточки набора и шансы выпадения</summary>
+   <div id="randomizerItems" class="randomizer-items" style="margin-top:12px"></div>
+  </details>
   <div class="randomizer-total"><span>Сумма заданных весов</span><strong id="randomizerTotal">0%</strong><span class="muted" id="randomizerTotalHint">Выбери хотя бы одну карточку</span></div>
   <div class="actions" style="margin-top:14px">
    <button class="primary" id="saveRandomizer">Сохранить рандомайзер и создать Overlay</button>
@@ -1057,7 +1077,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
   <div class="notice hidden" id="randomizerUrlBox" style="margin-top:12px;word-break:break-all"></div>
  </div>
  <div class="panel" id="randomizerCardPanel">
-  <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Настройка по той же логике, что и карточка действия. Оформление независимо от набора.</div></div><span class="pill">ОТДЕЛЬНАЯ КАРТОЧКА</span></div>
+  <div class="panelhead"><div><h2>Карточка рандомайзера</h2></div><span class="pill">ОТДЕЛЬНАЯ КАРТОЧКА</span></div>
   <div class="formgrid">
    <div class="field full randomizer-settings-heading">Содержимое карточки</div>
    <div class="field full randomizer-card-top">
@@ -1065,7 +1085,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
     <div class="randomizer-card-preview-wrap"><label>Предпросмотр карточки</label><div class="randomizer-card-preview compact" id="randomizerCardPreview"></div></div>
    </div>
 
-   <details class="field full randomizer-fold" open><summary>Размеры и оформление карточки</summary><div class="randomizer-fold-grid">
+   <details class="field full randomizer-fold"><summary>Размеры и оформление карточки</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Оформление карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
    <div class="field"><label>Режим отображения</label><select id="randomizerCardImageMode"><option value="off">Без изображения</option><option value="on">С изображением</option></select></div>
    <div class="field"><label>Индивидуальный цвет бокса</label><input id="randomizerCardColor" type="color" value="#6d83ff" style="height:42px;padding:4px"></div>
@@ -1080,7 +1100,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
    <div class="field randomizer-image-setting"><label>Положение иконки по горизонтали: <b class="rangeval" id="randomizerCardGiftPosXVal">0 px</b></label><input id="randomizerCardGiftPosX" type="range" min="-100" max="100" value="0"></div>
    <div class="field randomizer-image-setting"><label>Положение иконки по вертикали: <b class="rangeval" id="randomizerCardGiftPosYVal">0 px</b></label><input id="randomizerCardGiftPosY" type="range" min="-100" max="100" value="0"></div>
   </div></details>
-  <details class="field full randomizer-fold" open><summary>Размеры и оформление текста</summary><div class="randomizer-fold-grid">
+  <details class="field full randomizer-fold"><summary>Размеры и оформление текста</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Размер подписи: <b class="rangeval" id="randomizerCardTextSizeVal">12 px</b></label><input id="randomizerCardTextSize" type="range" min="8" max="32" value="12"></div>
    <div class="field"><label>Положение подписи по вертикали: <b class="rangeval" id="randomizerCardTextOffsetVal">0 px</b></label><input id="randomizerCardTextOffset" type="range" min="-80" max="80" value="0"></div>
    <div class="field"><label>Шрифт подписи</label><select id="randomizerCardFont"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
@@ -1089,23 +1109,15 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
   </div>
 
  </div>
- <div class="panel" id="randomizerSoundPanel">
-  <div class="panelhead"><div><h2>Звук оверлея</h2><div class="sub">Общая громкость щелчков прокрутки и звука победителя</div></div></div>
-  <div class="field full"><label for="randomizerOverlaySoundVolume">Общая громкость: <b class="rangeval" id="randomizerOverlaySoundVolumeVal">100%</b></label><input id="randomizerOverlaySoundVolume" type="range" min="0" max="100" step="1" value="100"></div>
-  <div class="sub" style="margin-top:7px">Изменение вступит в силу после сохранения рандомайзера.</div>
- </div>
- <div class="panel">
-  <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
-  <div class="randomizer-launch">
-   <div><div class="muted small">Последний результат</div><strong id="randomizerWinner">Пока нет результатов</strong></div>
-   <button class="primary" id="launchRandomizer" disabled>▶ Запуск</button>
-  </div>
-  <div class="sub" id="randomizerLaunchHint" style="margin-top:10px">Сначала сохрани рандомайзер и открой Overlay в OBS или TikTok Live Studio.</div>
- </div>
+
  <div class="panel" id="randomizerOverlayPreviewPanel">
   <div class="panelhead"><div><h2>Предпросмотр Overlay</h2><div class="sub">Проверь ожидание, прокрутку и результат прямо на странице</div></div><button type="button" id="previewRandomizerAnimation">▶ Тест анимации</button></div>
   <div class="randomizer-overlay-preview" id="randomizerOverlayPreview"><div class="randomizer-preview-wait" id="randomizerPreviewWait"></div><div class="randomizer-preview-roulette" id="randomizerPreviewRoulette"><div class="randomizer-preview-pointer"></div><div class="randomizer-preview-track" id="randomizerPreviewTrack"></div><div class="randomizer-preview-winner" id="randomizerPreviewWinner"></div></div></div>
-  <div class="sub" style="margin-top:8px">Для теста не требуется открывать отдельное окно Overlay.</div>
+ </div>
+ <div class="panel" id="randomizerSoundPanel">
+  <div class="panelhead"><div><h2>Звук оверлея</h2></div></div>
+  <div class="field full"><label for="randomizerOverlaySoundVolume">Общая громкость: <b class="rangeval" id="randomizerOverlaySoundVolumeVal">100%</b></label><input id="randomizerOverlaySoundVolume" type="range" min="0" max="100" step="1" value="100"></div>
+  <div class="sub" style="margin-top:7px">Изменение вступит в силу после сохранения рандомайзера.</div>
  </div>
  <div class="panel" id="randomizerHistoryPanel"><div class="panelhead"><div><h2>История результатов</h2><div class="sub">Дата, время и результат каждого запуска</div></div><button type="button" id="clearRandomizerHistory" class="danger">Очистить историю</button></div><div id="randomizerHistoryList"></div></div>
 </section>
@@ -5930,6 +5942,7 @@ async function refreshLicense(){
   if(state.settings.overlayStyle==='rotator')state.settings.overlayStyle='ticker';
  }
  updatePlanUi();
+ if(!isPro()&&document.getElementById('randomizer')&&!document.getElementById('randomizer').classList.contains('hidden'))switchTab('builder');
  if(!document.body.classList.contains('overlay')&&typeof render==='function')render();
  else if(typeof updateFreeCardLimitUi==='function')updateFreeCardLimitUi();
 }
@@ -6661,7 +6674,7 @@ $('launchRandomizer').onclick=async()=>{
 };
 
 function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" onclick="window.openSavedSet(decodeURIComponent('${encodeURIComponent(s.id)}'))" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
-function switchTab(id){if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='randomizer')renderRandomizer()}
+function switchTab(id){if(id==='randomizer'&&!isPro()){toast('Раздел «Рандомайзер» доступен только по подписке PRO.');id='builder'}if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='randomizer')renderRandomizer()}
 window.openSavedSet = function(id){
  const target=state.sets.find(item=>String(item.id)===String(id));
  if(!target){toast('Не удалось найти этот набор');return false}
