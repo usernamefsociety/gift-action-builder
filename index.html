@@ -2167,87 +2167,133 @@ async function randomizerOverlayMode(){
  root.innerHTML='<div id="randomizerWaitCard"></div><div class="roulette-shell is-hidden" id="rouletteShell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div></div>';
  document.body.append(root);
  const publicId=new URLSearchParams(location.search).get('randomizer');
- let lastRunId='',initialized=false,busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null,rouletteSequence=[];
+ let lastRunId='',initialized=false,busy=false,drawInFlight=false,latestData=null,rouletteSequence=[];
+ let spinTimer=null,resultTimer=null,returnTimer=null,transitionFallback=null,waitHideTimer=null,lastCardSignature='';
  const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
- function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.tile')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
+ const statusEl=document.createElement('div');statusEl.className='roulette-empty';statusEl.style.display='none';root.append(statusEl);
+ function setOverlayMessage(message){statusEl.textContent=message||'';statusEl.style.display=message?'':'none';}
+ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+ function clearSpinTimers(){
+  for(const timer of [spinTimer,resultTimer,returnTimer,transitionFallback,waitHideTimer])if(timer)clearTimeout(timer);
+  spinTimer=resultTimer=returnTimer=transitionFallback=waitHideTimer=null;
+ }
+ function showWaitingCard(cfg){
+  const signature=JSON.stringify(cfg||{});
+  if(signature!==lastCardSignature){waitCard.innerHTML=randomizerCardMarkup(cfg);lastCardSignature=signature;}
+  waitCard.style.display='';
+  waitCard.querySelector('.tile')?.classList.remove('is-hidden');
+  shell.classList.remove('is-visible');shell.classList.add('is-hidden');
+ }
  function buildRouletteStrip(selected){
-  const track=$('rouletteTrack');if(!track)return;
+  const track=$('rouletteTrack');if(!track)return [];
   rouletteSequence=buildWeightedRouletteSequence(selected);
-  const originalActions=state.sets[0].actions;state.sets[0].actions=rouletteSequence;
-  const markup=tickerMarkup();state.sets[0].actions=originalActions;
-  track.innerHTML=markup;applyStyle(track);recolorGlassIn(track);
+  const originalActions=state.sets[0].actions;
+  try{state.sets[0].actions=rouletteSequence;track.innerHTML=tickerMarkup();}
+  finally{state.sets[0].actions=originalActions;}
+  applyStyle(track);recolorGlassIn(track);
   const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100);
-  track.style.setProperty('--roulette-card-width',cardWidth+'px');track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+  track.style.setProperty('--roulette-card-width',cardWidth+'px');
+  track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+  return [...track.children];
  }
  function fadeToRoulette(){
-  const card=waitCard.querySelector('.tile');
-  if(card)card.classList.add('is-hidden');
+  const card=waitCard.querySelector('.tile');if(card)card.classList.add('is-hidden');
   shell.classList.remove('is-hidden');
   requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')));
-  setTimeout(()=>{waitCard.style.display='none'},1850);
+  if(waitHideTimer)clearTimeout(waitHideTimer);
+  waitHideTimer=setTimeout(()=>{waitCard.style.display='none';waitHideTimer=null;},1850);
  }
- function returnToWaiting(cfg){
-  waitCard.innerHTML=randomizerCardMarkup(cfg);
-  waitCard.style.display='';
-  const waitingTile=waitCard.querySelector('.tile');
-  if(waitingTile)waitingTile.classList.add('is-hidden');
-  shell.classList.remove('is-visible');
-  shell.classList.add('is-hidden');
+ async function returnToWaiting(cfg){
+  clearSpinTimers();
+  waitCard.innerHTML=randomizerCardMarkup(cfg);lastCardSignature=JSON.stringify(cfg||{});waitCard.style.display='';
+  const waitingTile=waitCard.querySelector('.tile');if(waitingTile)waitingTile.classList.add('is-hidden');
+  shell.classList.remove('is-visible');shell.classList.add('is-hidden');
   root.classList.remove('has-winner','pointer-hidden');
+  const frame=$('rouletteWinnerFrame');if(frame){frame.hidden=true;frame.style.width='';frame.style.height='';}
+  const track=$('rouletteTrack');
+  await delay(1900);
+  if(track){track.style.transition='none';track.style.transform='translate3d(0,0,0)';void track.offsetWidth;}
   requestAnimationFrame(()=>requestAnimationFrame(()=>waitingTile?.classList.remove('is-hidden')));
-  setTimeout(()=>{
-   const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;
-   const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}
-  },1850);
+  await delay(700);
+ }
+ async function animateRun(cfg,selected,run){
+  try{
+   const track=$('rouletteTrack'),windowEl=$('rouletteWindow');
+   if(!track||!windowEl)throw new Error('Не найдена лента рандомайзера');
+   const nodes=buildRouletteStrip(selected);
+   if(!nodes.length)throw new Error('Не удалось подготовить карточки ленты');
+   // Let the browser finish inserting and sizing all cards before measuring the winner position.
+   await nextFrame();await nextFrame();
+   const winnerPositions=rouletteSequence.map((action,index)=>String(action.id)===String(run.winnerActionId)?index:-1).filter(index=>index>=0);
+   if(!winnerPositions.length)throw new Error('Карточка победителя отсутствует в ленте');
+   const desired=Math.floor(rouletteSequence.length*.78);
+   const targetIndex=winnerPositions.reduce((best,index)=>Math.abs(index-desired)<Math.abs(best-desired)?index:best,winnerPositions[0]);
+   const card=nodes[targetIndex];if(!card||!card.isConnected)throw new Error('Не удалось определить карточку победителя');
+   const frame=$('rouletteWinnerFrame');if(frame){frame.hidden=true;frame.style.width='';frame.style.height='';}
+   root.classList.remove('has-winner','pointer-hidden');
+   track.style.transition='none';track.style.transform='translate3d(0,0,0)';void track.offsetWidth;
+   const viewportWidth=windowEl.clientWidth;
+   const startX=nodes[0].offsetLeft+nodes[0].offsetWidth/2-viewportWidth/2;
+   const endX=card.offsetLeft+card.offsetWidth/2-viewportWidth/2;
+   if(!Number.isFinite(startX)||!Number.isFinite(endX)||viewportWidth<=0)throw new Error('Некорректные размеры ленты');
+   track.style.transform=`translate3d(${-startX}px,0,0)`;void track.offsetWidth;
+   fadeToRoulette();
+   // Wait until the visible state has been committed, then start the CSS transition.
+   await nextFrame();await nextFrame();
+   await new Promise(resolve=>{
+    let settled=false;
+    const finish=()=>{if(settled)return;settled=true;track.removeEventListener('transitionend',onEnd);if(transitionFallback)clearTimeout(transitionFallback);transitionFallback=null;resolve();};
+    const onEnd=e=>{if(e.target===track&&e.propertyName==='transform')finish();};
+    track.addEventListener('transitionend',onEnd);
+    transitionFallback=setTimeout(finish,7900);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
+     track.style.transform=`translate3d(${-endX}px,0,0)`;
+    }));
+   });
+   root.classList.add('pointer-hidden');
+   await delay(380);
+   if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px';}
+   root.classList.add('has-winner');
+   await delay(3000);
+   await returnToWaiting(cfg);
+  }catch(err){
+   console.warn('[Randomizer overlay] spin failed:',err);
+   await returnToWaiting(cfg);
+  }finally{
+   busy=false;
+  }
  }
  async function draw(){
-  if(busy)return;
-  const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
-  if(error||!data){if(!latestData)root.innerHTML='<div class="roulette-empty">Не удалось загрузить рандомайзер</div>';return}
-  latestData=data;
-  const cfg=data.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
-  const allActions=cfg.actions||[],items=rand.items||[];
-  const selected=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))})).filter(x=>x.action);
-  if(!selected.length){root.innerHTML='<div class="roulette-empty">Рандомайзер ещё не настроен</div>';return}
-  showWaitingCard(cardCfg);
-  state={activeSet:'roulette',sets:[{id:'roulette',name:data.title,actions:selected.map(x=>({...x.action,hidden:false})),settings:{...defaultSettings(),...(cfg.settings||{})}}],settings:{...defaultSettings(),...(cfg.settings||{})}};
-  const track=$('rouletteTrack');if(!track)return;
-  if(!track.children.length)buildRouletteStrip(selected);
-  // On the first load, adopt the already saved run as the baseline.
-  // A published overlay must show its waiting card, not replay the previous spin.
-  if(!initialized){
-   lastRunId=rand.run?.id||'';
-   initialized=true;
-   return;
-  }
-  if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
-   lastRunId=rand.run.id;busy=true;buildRouletteStrip(selected);fadeToRoulette();
-   const nodes=[...track.children],windowEl=$('rouletteWindow');
-   const winnerPositions=rouletteSequence.map((action,index)=>String(action.id)===String(rand.run.winnerActionId)?index:-1).filter(index=>index>=0);
-   if(!winnerPositions.length){busy=false;return}
-   const desired=Math.floor(rouletteSequence.length*.78);
-   const target=winnerPositions.reduce((best,index)=>Math.abs(index-desired)<Math.abs(best-desired)?index:best,winnerPositions[0]);
-   const card=nodes[target];
-   if(!card){busy=false;return}
-   const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');
-   track.style.transition='none';track.style.transform='translateX(0)';
-   const startX=nodes[0].offsetLeft+nodes[0].offsetWidth/2-windowEl.clientWidth/2;
-   track.style.transform=`translateX(${-startX}px)`;void track.offsetWidth;
-   const endX=card.offsetLeft+card.offsetWidth/2-windowEl.clientWidth/2;
-   requestAnimationFrame(()=>{track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';track.style.transform=`translateX(${-endX}px)`});
-   spinTimer=setTimeout(()=>{
-    root.classList.add('pointer-hidden');
-    setTimeout(()=>{
-     if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px'}
-     root.classList.add('has-winner');
-     resultTimer=setTimeout(()=>{returnToWaiting(cardCfg);returnTimer=setTimeout(()=>{busy=false;},700)},3000);
-    },380);
-   },7350);
+  if(busy||drawInFlight||!publicId)return;
+  drawInFlight=true;
+  try{
+   const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
+   if(error||!data){if(!latestData)setOverlayMessage('Не удалось загрузить рандомайзер');return;}
+   setOverlayMessage('');
+   latestData=data;
+   const cfg=data.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
+   const allActions=cfg.actions||[],items=rand.items||[];
+   const selected=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))})).filter(x=>x.action);
+   if(!selected.length){setOverlayMessage('Рандомайзер ещё не настроен');return;}
+   state={activeSet:'roulette',sets:[{id:'roulette',name:data.title,actions:selected.map(x=>({...x.action,hidden:false})),settings:{...defaultSettings(),...(cfg.settings||{})}}],settings:{...defaultSettings(),...(cfg.settings||{})}};
+   showWaitingCard(cardCfg);
+   const track=$('rouletteTrack');if(track&&!track.children.length)buildRouletteStrip(selected);
+   // First poll establishes a baseline: never replay the last saved result on page refresh.
+   if(!initialized){lastRunId=rand.run?.id||'';initialized=true;return;}
+   if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
+    lastRunId=rand.run.id;busy=true;
+    void animateRun(cardCfg,selected,rand.run);
+   }
+  }catch(err){
+   console.warn('[Randomizer overlay] update failed:',err);
+  }finally{
+   drawInFlight=false;
   }
  }
  await draw();setInterval(draw,500);
 }
-
 function overlayMode(){
  document.body.className='overlay';
  $('app').remove();$('toast').remove();
