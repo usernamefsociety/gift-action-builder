@@ -881,6 +881,50 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 .roulette-page.has-winner .roulette-winner{opacity:1;transform:translate(-50%,-50%) scale(1);box-shadow:0 0 0 5px #ffcf5433,0 0 42px #ffcf54a6}
 @media(max-width:700px){.roulette-page .roulette-shell{width:100vw!important}}
 </style>
+
+<style id="randomizer-overlay-smooth-transparent-fix">
+/* Crossfade waiting card and roulette instead of switching them abruptly. */
+#randomizerWaitCard .tile{
+  transition:opacity 1.65s cubic-bezier(.22,1,.36,1),
+             transform 1.65s cubic-bezier(.22,1,.36,1),
+             filter 1.65s cubic-bezier(.22,1,.36,1)!important;
+  will-change:opacity,transform,filter;
+}
+#randomizerWaitCard .tile.is-hidden{
+  opacity:0!important;
+  transform:translate3d(0,0,0) scale(.965)!important;
+  filter:blur(10px)!important;
+}
+.roulette-page .roulette-shell{
+  transition:opacity 1.65s cubic-bezier(.22,1,.36,1),
+             transform 1.65s cubic-bezier(.22,1,.36,1),
+             filter 1.65s cubic-bezier(.22,1,.36,1)!important;
+  will-change:opacity,transform,filter;
+}
+.roulette-page .roulette-shell.is-hidden{
+  opacity:0!important;
+  transform:translate3d(0,12px,0) scale(.975)!important;
+  filter:blur(10px)!important;
+}
+.roulette-page .roulette-shell.is-visible{
+  opacity:1!important;
+  transform:translate3d(0,0,0) scale(1)!important;
+  filter:blur(0)!important;
+}
+/* The roulette ribbon itself must not paint an opaque dark band in streaming software. */
+.roulette-page,
+.roulette-page .roulette-shell,
+.roulette-page .roulette-window,
+.roulette-page .roulette-track{
+  background:transparent!important;
+}
+.roulette-page .roulette-window{
+  border-top-color:transparent!important;
+  border-bottom-color:transparent!important;
+  box-shadow:none!important;
+}
+.roulette-page .roulette-track{background-color:transparent!important}
+</style>
 </head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -2088,8 +2132,27 @@ async function randomizerOverlayMode(){
  let lastRunId='',busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null;
  const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
  function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.tile')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
- function fadeToRoulette(){const card=waitCard.querySelector('.tile');if(card)card.classList.add('is-hidden');setTimeout(()=>{waitCard.style.display='none';shell.classList.remove('is-hidden');requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')))},1100)}
- function returnToWaiting(cfg){shell.classList.remove('is-visible');shell.classList.add('is-hidden');setTimeout(()=>{const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner','pointer-hidden');const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}showWaitingCard(cfg);},1100)}
+ function fadeToRoulette(){
+  const card=waitCard.querySelector('.tile');
+  if(card)card.classList.add('is-hidden');
+  shell.classList.remove('is-hidden');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')));
+  setTimeout(()=>{waitCard.style.display='none'},1650);
+ }
+ function returnToWaiting(cfg){
+  waitCard.innerHTML=randomizerCardMarkup(cfg);
+  waitCard.style.display='';
+  const waitingTile=waitCard.querySelector('.tile');
+  if(waitingTile)waitingTile.classList.add('is-hidden');
+  shell.classList.remove('is-visible');
+  shell.classList.add('is-hidden');
+  root.classList.remove('has-winner','pointer-hidden');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>waitingTile?.classList.remove('is-hidden')));
+  setTimeout(()=>{
+   const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;
+   const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}
+  },1650);
+ }
  async function draw(){
   if(busy)return;
   const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
