@@ -840,7 +840,22 @@ body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!im
     #tickerSettingsPanel .overlay-settings-group[open]>summary:after{transform:rotate(180deg)}
     #tickerSettingsPanel .overlay-settings-group>summary .group-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(167,139,250,.13);color:#b99aff}
     #tickerSettingsPanel .overlay-settings-group .formgrid{padding:0 14px 14px}
-  </style>
+  
+/* Randomizer card editor layout */
+#randomizerCardPanel .randomizer-card-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,230px);gap:16px;align-items:start}
+#randomizerCardPanel .randomizer-card-gift-select{min-width:0}
+#randomizerCardPanel .randomizer-card-preview-wrap{min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#100e18}
+#randomizerCardPanel .randomizer-card-preview-wrap>label{display:block;margin-bottom:8px}
+#randomizerCardPanel .randomizer-card-preview.compact{min-height:140px;max-height:190px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px}
+#randomizerCardPanel .randomizer-card-preview.compact .tile{transform:scale(.82);transform-origin:center;max-width:100%}
+#randomizerCardPanel .randomizer-fold{border:1px solid var(--line);border-radius:12px;padding:0;background:rgba(255,255,255,.02)}
+#randomizerCardPanel .randomizer-fold>summary{cursor:pointer;list-style:none;padding:12px 14px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#randomizerCardPanel .randomizer-fold>summary::-webkit-details-marker{display:none}
+#randomizerCardPanel .randomizer-fold>summary:after{content:"▾";opacity:.75;transition:transform .2s ease}
+#randomizerCardPanel .randomizer-fold:not([open])>summary:after{transform:rotate(-90deg)}
+#randomizerCardPanel .randomizer-fold-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 12px 12px}
+@media(max-width:700px){#randomizerCardPanel .randomizer-card-top{grid-template-columns:1fr}#randomizerCardPanel .randomizer-card-preview-wrap{max-width:100%}}
+
   <details class="overlay-settings-group" open>
     <summary><span class="group-icon">▦</span>Тип и расположение</summary>
     <div class="formgrid">
@@ -924,29 +939,32 @@ body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!im
   <div class="panelhead"><div><h2>Карточка рандомайзера</h2><div class="sub">Настройка по той же логике, что и карточка действия. Оформление независимо от набора.</div></div><span class="pill">ОТДЕЛЬНАЯ КАРТОЧКА</span></div>
   <div class="formgrid">
    <div class="field full randomizer-settings-heading">Содержимое карточки</div>
-   <div class="field full"><label>Подарок, который отвечает за карточку</label><div class="row"><input type="hidden" id="randomizerCardGift" value="0"><button type="button" id="openRandomizerGiftCatalog">Выбрать подарок из каталога</button><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"><strong id="randomizerCardGiftName" class="grow">Rose</strong></div></div>
+   <div class="field full randomizer-card-top">
+    <div class="randomizer-card-gift-select"><label>Подарок, который отвечает за карточку</label><div class="row" style="flex-wrap:wrap"><input type="hidden" id="randomizerCardGift" value="0"><button type="button" id="openRandomizerGiftCatalog">Выбрать подарок из каталога</button><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"><strong id="randomizerCardGiftName" class="grow">Rose</strong></div></div>
+    <div class="randomizer-card-preview-wrap"><label>Предпросмотр карточки</label><div class="randomizer-card-preview compact" id="randomizerCardPreview"></div></div>
+   </div>
    <div class="field full"><label>Название карточки (подпись)</label><textarea id="randomizerCardName" maxlength="90" rows="2" style="width:100%;resize:vertical" placeholder="Например: ЗАПУСК РАНДОМАЙЗЕРА"></textarea></div>
-   <div class="field full randomizer-settings-heading">Размеры и оформление карточки</div>
+   <details class="field full randomizer-fold" open><summary>Размеры и оформление карточки</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Стиль карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
    <div class="field"><label>Режим отображения</label><select id="randomizerCardImageMode"><option value="off">Без изображения</option><option value="on">С изображением</option></select></div>
    <div class="field"><label>Индивидуальный цвет бокса</label><input id="randomizerCardColor" type="color" value="#6d83ff" style="height:42px;padding:4px"></div>
    <div class="field"><label>Ширина карточки: <b class="rangeval" id="randomizerCardWidthVal">150 px</b></label><input id="randomizerCardWidth" type="range" min="90" max="280" value="150"></div>
    <div class="field"><label>Высота карточки: <b class="rangeval" id="randomizerCardHeightVal">126 px</b></label><input id="randomizerCardHeight" type="range" min="80" max="240" value="126"></div>
    <div class="field"><label>Размер иконки: <b class="rangeval" id="randomizerCardIconSizeVal">64 px</b></label><input id="randomizerCardIconSize" type="range" min="24" max="150" value="64"></div>
-   <div class="field full randomizer-image-setting"><label>Изображение карточки</label><div class="row" style="flex-wrap:wrap"><input id="randomizerCardImageFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:340px"><button type="button" id="removeRandomizerCardImage">Удалить изображение</button></div><div class="sub">PNG, JPG или WebP. Изображение будет основным, подарок останется небольшой иконкой в углу.</div><img id="randomizerCardImagePreview" class="hidden" alt="Предпросмотр изображения" style="display:block;max-width:180px;max-height:130px;object-fit:contain;margin-top:10px;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:6"></div>
+   <div class="field full randomizer-image-setting" id="randomizerCardImageUploadField"><label>Изображение карточки</label><div class="row" style="flex-wrap:wrap"><input id="randomizerCardImageFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:340px"><button type="button" id="removeRandomizerCardImage">Удалить изображение</button></div><div class="sub">PNG, JPG или WebP. Изображение будет основным, подарок останется небольшой иконкой в углу.</div><img id="randomizerCardImagePreview" class="hidden" alt="Предпросмотр изображения" style="display:block;max-width:180px;max-height:130px;object-fit:contain;margin-top:10px;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:6"></div>
    <div class="field randomizer-image-setting"><label>Размер изображения: <b class="rangeval" id="randomizerCardActionImageSizeVal">80 px</b></label><input id="randomizerCardActionImageSize" type="range" min="20" max="240" value="80"></div>
    <div class="field randomizer-image-setting"><label>Положение изображения по горизонтали: <b class="rangeval" id="randomizerCardActionImagePosXVal">0 px</b></label><input id="randomizerCardActionImagePosX" type="range" min="-120" max="120" value="0"></div>
    <div class="field randomizer-image-setting"><label>Положение изображения по вертикали: <b class="rangeval" id="randomizerCardActionImagePosYVal">0 px</b></label><input id="randomizerCardActionImagePosY" type="range" min="-120" max="120" value="0"></div>
-   <div class="field full randomizer-settings-heading">Размеры и оформление текста</div>
+   </div></details><details class="field full randomizer-fold" open><summary>Размеры и оформление текста</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Размер подписи: <b class="rangeval" id="randomizerCardTextSizeVal">12 px</b></label><input id="randomizerCardTextSize" type="range" min="8" max="32" value="12"></div>
    <div class="field"><label>Положение подписи по вертикали: <b class="rangeval" id="randomizerCardTextOffsetVal">0 px</b></label><input id="randomizerCardTextOffset" type="range" min="-80" max="80" value="0"></div>
    <div class="field"><label>Шрифт подписи</label><select id="randomizerCardFont"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
    <div class="field"><label>Чёрная обводка текста</label><select id="randomizerCardOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
-   <div class="field full randomizer-settings-heading">Положение иконки подарка</div>
+   </div></details><div class="field full randomizer-settings-heading">Положение иконки подарка</div>
    <div class="field randomizer-image-setting"><label>Положение иконки по горизонтали: <b class="rangeval" id="randomizerCardGiftPosXVal">0 px</b></label><input id="randomizerCardGiftPosX" type="range" min="-100" max="100" value="0"></div>
    <div class="field randomizer-image-setting"><label>Положение иконки по вертикали: <b class="rangeval" id="randomizerCardGiftPosYVal">0 px</b></label><input id="randomizerCardGiftPosY" type="range" min="-100" max="100" value="0"></div>
   </div>
-  <div style="margin-top:14px"><label>Предпросмотр карточки</label><div class="randomizer-card-preview" id="randomizerCardPreview"></div><div class="sub" style="margin-top:8px">Карточка отображается до запуска и возвращается после завершения розыгрыша.</div></div>
+
  </div>
  <div class="panel">
   <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
@@ -1525,7 +1543,7 @@ function updateRandomizerCardPreview(){
  const c=readRandomizerCardControls();
  for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize],['randomizerCardActionImageSizeVal',c.actionImageSize],['randomizerCardActionImagePosXVal',c.actionImagePosX],['randomizerCardActionImagePosYVal',c.actionImagePosY],['randomizerCardGiftPosXVal',c.giftPosX],['randomizerCardGiftPosYVal',c.giftPosY],['randomizerCardTextOffsetVal',c.textOffset]])$(id).textContent=v+' px';
  const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardGiftName').textContent=g?.name||'Подарок не выбран';
- $('randomizerCardImageUploadField').classList.toggle('hidden',c.imageMode!=='on');document.querySelectorAll('#randomizerCardPanel .randomizer-image-setting').forEach(el=>el.classList.toggle('hidden',c.imageMode!=='on'));
+ const uploadField=$('randomizerCardImageUploadField');if(uploadField)uploadField.classList.toggle('hidden',c.imageMode!=='on');document.querySelectorAll('#randomizerCardPanel .randomizer-image-setting').forEach(el=>el.classList.toggle('hidden',c.imageMode!=='on'));
  $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
  const tile=$('randomizerCardPreview').querySelector('.tile');if(tile){tile.style.margin='auto';tile.style.setProperty('--outline-shadow',c.textOutline?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none');}
  if(typeof ensureGlassTintObserver==='function')ensureGlassTintObserver();
