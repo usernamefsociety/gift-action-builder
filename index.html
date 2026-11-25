@@ -836,6 +836,51 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
  #randomizerCardPanel .randomizer-card-preview-wrap{width:100%;box-sizing:border-box}
 }
 </style>
+<style id="randomizer-preview-live-design">
+/* The non-functional icon-size slider is intentionally hidden. */
+#randomizerCardPanel .randomizer-unused-icon-size{display:none!important}
+
+/* Same roulette band, card sizing and center marker in preview and published overlay. */
+.roulette-page .roulette-shell{
+ position:absolute!important;left:0!important;right:0!important;top:50%!important;
+ width:100vw!important;max-width:none!important;padding:0!important;margin:0!important;
+ overflow:hidden!important;transform:translateY(calc(-50% + 12px)) scale(.985);
+}
+.roulette-page .roulette-shell.is-visible{transform:translateY(-50%) scale(1)!important}
+.roulette-page .roulette-shell.is-hidden{transform:translateY(calc(-50% + 12px)) scale(.985)!important}
+.roulette-page .roulette-window,
+.randomizer-preview-roulette{
+ width:100%!important;box-sizing:border-box!important;overflow:hidden!important;
+ padding:22px 0!important;
+ background:linear-gradient(180deg,#100e18ee,#21172eee 50%,#100e18ee)!important;
+ border-top:2px solid #684a86!important;border-bottom:2px solid #684a86!important;
+ box-shadow:none!important;
+}
+.roulette-page .roulette-track,
+.randomizer-preview-track{
+ display:flex!important;align-items:center!important;gap:12px!important;
+ width:max-content!important;padding:8px 0!important;will-change:transform;
+}
+.roulette-page .roulette-track>.tile,
+.randomizer-preview-track>.tile{
+ flex:0 0 auto!important;width:var(--roulette-card-width,150px)!important;
+ min-width:var(--roulette-card-width,150px)!important;max-width:var(--roulette-card-width,150px)!important;
+ height:var(--roulette-card-height,126px)!important;min-height:var(--roulette-card-height,126px)!important;
+ box-sizing:border-box!important;
+}
+.roulette-page .roulette-pointer{
+ position:absolute!important;z-index:5!important;left:50%!important;top:0!important;bottom:0!important;
+ width:3px!important;background:#ffcf54!important;box-shadow:0 0 12px #ffcf54!important;
+ transform:translateX(-50%)!important;opacity:1;transition:opacity .35s ease!important;
+}
+.roulette-page .roulette-pointer:before,.roulette-page .roulette-pointer:after{display:none!important}
+.roulette-page.pointer-hidden .roulette-pointer{opacity:0!important}
+.randomizer-preview-pointer{opacity:1;transition:opacity .35s ease}
+.randomizer-preview-roulette.pointer-hidden .randomizer-preview-pointer{opacity:0}
+.roulette-page .roulette-winner{opacity:0;transform:translate(-50%,-50%) scale(.92);box-shadow:0 0 0 0 #ffcf5400,0 0 0 #ffcf5400;transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1),box-shadow 1.2s ease}
+.roulette-page.has-winner .roulette-winner{opacity:1;transform:translate(-50%,-50%) scale(1);box-shadow:0 0 0 5px #ffcf5433,0 0 42px #ffcf54a6}
+@media(max-width:700px){.roulette-page .roulette-shell{width:100vw!important}}
+</style>
 </head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
@@ -971,7 +1016,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
    <div class="field full" id="randomizerCardImageUploadField"><label>Изображение карточки</label><div class="row" style="flex-wrap:wrap"><input id="randomizerCardImageFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:340px"><button type="button" id="removeRandomizerCardImage">Удалить изображение</button></div><div class="sub">PNG, JPG или WebP. Изображение будет основным, подарок останется небольшой иконкой в углу.</div><img id="randomizerCardImagePreview" class="hidden" alt="Предпросмотр изображения" style="display:block;max-width:180px;max-height:130px;object-fit:contain;margin-top:10px;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
    <div class="field"><label>Ширина карточки: <b class="rangeval" id="randomizerCardWidthVal">150 px</b></label><input id="randomizerCardWidth" type="range" min="90" max="280" value="150"></div>
    <div class="field"><label>Высота карточки: <b class="rangeval" id="randomizerCardHeightVal">126 px</b></label><input id="randomizerCardHeight" type="range" min="80" max="240" value="126"></div>
-   <div class="field"><label>Размер иконки: <b class="rangeval" id="randomizerCardIconSizeVal">64 px</b></label><input id="randomizerCardIconSize" type="range" min="24" max="150" value="64"></div>
+   <div class="field randomizer-unused-icon-size"><label>Размер иконки: <b class="rangeval" id="randomizerCardIconSizeVal">64 px</b></label><input id="randomizerCardIconSize" type="range" min="24" max="150" value="64"></div>
    <div class="field randomizer-image-setting"><label>Размер изображения: <b class="rangeval" id="randomizerCardActionImageSizeVal">80 px</b></label><input id="randomizerCardActionImageSize" type="range" min="20" max="240" value="80"></div>
    <div class="field randomizer-image-setting"><label>Положение изображения по горизонтали: <b class="rangeval" id="randomizerCardActionImagePosXVal">0 px</b></label><input id="randomizerCardActionImagePosX" type="range" min="-120" max="120" value="0"></div>
    <div class="field randomizer-image-setting"><label>Положение изображения по вертикали: <b class="rangeval" id="randomizerCardActionImagePosYVal">0 px</b></label><input id="randomizerCardActionImagePosY" type="range" min="-120" max="120" value="0"></div>
@@ -1631,7 +1676,15 @@ function renderRandomizerOverlayPreview(set){
  const markup=tickerMarkup();state.activeSet=old;state.settings=oldSettings;
  const holder=document.createElement('div');holder.innerHTML=markup;
  const cards=[...holder.children];track.innerHTML='';
- if(cards.length){for(let i=0;i<5;i++)cards.forEach(c=>track.append(c.cloneNode(true)));applyStyle(track);recolorGlassIn(track)}
+ if(cards.length){
+  for(let i=0;i<5;i++)cards.forEach(c=>track.append(c.cloneNode(true)));
+  applyStyle(track);recolorGlassIn(track);
+  const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')
+    ?(Number(state.settings.panelWidth)||150)
+    :Math.max((Number(state.settings.iconSize)||64)+20,100);
+  track.style.setProperty('--roulette-card-width',cardWidth+'px');
+  track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+ }
  track.style.transform='translateX(0)';track.style.transition='none';
  if(winner)winner.classList.remove('show');
 }
@@ -1644,7 +1697,16 @@ function runRandomizerPreview(){
   const chosen=Math.max(0,Math.min(cards.length-1,Math.floor(cards.length*.78))),card=cards[chosen],viewport=roulette.clientWidth;
   const end=card.offsetLeft+card.offsetWidth/2-viewport/2;
   requestAnimationFrame(()=>{track.style.transition='transform 6.8s cubic-bezier(.08,.62,.08,1)';track.style.transform=`translateX(${-end}px)`});
-  randomizerPreviewTimer=setTimeout(()=>{winner.style.width=card.offsetWidth+'px';winner.style.height=card.offsetHeight+'px';winner.style.left='50%';winner.classList.add('show');randomizerPreviewTimer=setTimeout(()=>{winner.classList.remove('show');roulette.classList.remove('active');setTimeout(()=>{wait.style.display='';wait.classList.remove('fade-out');track.style.transition='none';track.style.transform='translateX(0)'},750)},3000)},7000);
+  randomizerPreviewTimer=setTimeout(()=>{
+   roulette.classList.add('pointer-hidden');
+   randomizerPreviewTimer=setTimeout(()=>{
+    winner.style.width=card.offsetWidth+'px';winner.style.height=card.offsetHeight+'px';winner.style.left='50%';winner.classList.add('show');
+    randomizerPreviewTimer=setTimeout(()=>{
+     winner.classList.remove('show');roulette.classList.remove('active');
+     setTimeout(()=>{wait.style.display='';wait.classList.remove('fade-out');track.style.transition='none';track.style.transform='translateX(0)';roulette.classList.remove('pointer-hidden')},750)
+    },3000);
+   },380);
+  },7000);
  },650);
 }
 $('previewRandomizerAnimation').onclick=runRandomizerPreview;
@@ -2027,7 +2089,7 @@ async function randomizerOverlayMode(){
  const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
  function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.tile')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
  function fadeToRoulette(){const card=waitCard.querySelector('.tile');if(card)card.classList.add('is-hidden');setTimeout(()=>{waitCard.style.display='none';shell.classList.remove('is-hidden');requestAnimationFrame(()=>requestAnimationFrame(()=>shell.classList.add('is-visible')))},1000)}
- function returnToWaiting(cfg){shell.classList.remove('is-visible');shell.classList.add('is-hidden');setTimeout(()=>{const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}showWaitingCard(cfg);},1000)}
+ function returnToWaiting(cfg){shell.classList.remove('is-visible');shell.classList.add('is-hidden');setTimeout(()=>{const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner','pointer-hidden');const track=$('rouletteTrack');if(track){track.style.transition='none';track.style.transform='translateX(0)'}showWaitingCard(cfg);},1000)}
  async function draw(){
   if(busy)return;
   const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
@@ -2060,9 +2122,12 @@ async function randomizerOverlayMode(){
    const endX=card.offsetLeft+card.offsetWidth/2-windowEl.clientWidth/2;
    requestAnimationFrame(()=>{track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';track.style.transform=`translateX(${-endX}px)`});
    spinTimer=setTimeout(()=>{
-    if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px'}
-    root.classList.add('has-winner');
-    resultTimer=setTimeout(()=>{returnToWaiting(cardCfg);returnTimer=setTimeout(()=>{busy=false;},700)},3000);
+    root.classList.add('pointer-hidden');
+    setTimeout(()=>{
+     if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px'}
+     root.classList.add('has-winner');
+     resultTimer=setTimeout(()=>{returnToWaiting(cardCfg);returnTimer=setTimeout(()=>{busy=false;},700)},3000);
+    },380);
    },7350);
   }
  }
