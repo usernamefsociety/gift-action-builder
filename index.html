@@ -707,10 +707,41 @@ body.captions-hidden .tile>b{display:none!important}
   transform:translate(-50%, calc(0px - var(--text-offset,0px)))!important;
 }
 
+
+/* Randomizer section and standalone roulette overlay */
+.randomizer-items{display:grid;gap:8px}
+.randomizer-item{display:grid;grid-template-columns:34px 52px minmax(0,1fr) 110px 110px;align-items:center;gap:10px;background:#100e18;border:1px solid var(--line);border-radius:11px;padding:9px;min-width:0}
+.randomizer-item img{width:48px;height:48px;object-fit:contain}
+.randomizer-item .r-name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.randomizer-item .r-prob{font-size:11px;color:#cba7f5;text-align:right}
+.randomizer-item input[type=number]{padding:8px}
+.randomizer-total{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+.randomizer-total strong{font-size:18px;font-variant-numeric:tabular-nums}
+.randomizer-total.over strong{color:var(--red)}
+.randomizer-launch{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#100e18;border:1px solid var(--line);border-radius:12px;padding:16px}
+.randomizer-launch strong{display:block;font-size:18px;margin-top:4px}
+.randomizer-launch button{min-width:150px;min-height:48px}
+.roulette-page{position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.roulette-shell{position:relative;width:min(100vw,1500px);padding:30px 0;overflow:hidden}
+.roulette-window{position:relative;width:100%;overflow:hidden;padding:20px 0;background:linear-gradient(180deg,#100e18ee,#21172eee 50%,#100e18ee);border-top:2px solid #684a86;border-bottom:2px solid #684a86;box-shadow:0 12px 45px #0008}
+.roulette-track{display:flex;align-items:center;gap:12px;width:max-content;will-change:transform;transform:translateX(0);padding:8px 0}
+.roulette-track>.tile{flex:0 0 auto!important;width:var(--roulette-card-width,150px)!important;min-width:var(--roulette-card-width,150px)!important;max-width:var(--roulette-card-width,150px)!important;height:var(--roulette-card-height,126px)!important;min-height:var(--roulette-card-height,126px)!important;box-sizing:border-box}
+.roulette-track>.tile:not(.graphic-tile){display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#171522;border:1px solid #49355f;border-radius:12px;padding:10px}
+.roulette-track>.tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
+.roulette-track>.tile>b{white-space:pre-wrap!important;overflow-wrap:anywhere!important;text-align:center!important}
+.roulette-pointer{position:absolute;z-index:5;left:50%;top:0;bottom:0;width:0;transform:translateX(-50%);pointer-events:none}
+.roulette-pointer:before{content:"";position:absolute;top:0;left:-17px;border-left:17px solid transparent;border-right:17px solid transparent;border-top:30px solid #ffcf54;filter:drop-shadow(0 2px 5px #0009)}
+.roulette-pointer:after{content:"";position:absolute;bottom:0;left:-17px;border-left:17px solid transparent;border-right:17px solid transparent;border-bottom:30px solid #ffcf54;filter:drop-shadow(0 -2px 5px #0009)}
+.roulette-winner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;border:2px solid #ffcf54;border-radius:14px;box-shadow:0 0 0 4px #ffcf5433,0 0 35px #ffcf5480}
+.roulette-winner-label{position:absolute;left:50%;top:calc(100% + 16px);transform:translateX(-50%);padding:7px 14px;border-radius:99px;background:#ffcf54;color:#21172e;font-weight:800;white-space:nowrap;opacity:0;transition:opacity .25s}
+.roulette-page.has-winner .roulette-winner-label{opacity:1}
+.roulette-empty{color:#fff;text-align:center;font:600 18px Inter,sans-serif;padding:30px}
+@media(max-width:700px){.randomizer-item{grid-template-columns:28px 42px minmax(0,1fr) 86px;gap:7px}.randomizer-item .r-prob{grid-column:3/5;text-align:left}.randomizer-item img{width:40px;height:40px}.randomizer-launch{align-items:stretch;flex-direction:column}.randomizer-launch button{width:100%}}
+
 </style></head><body>
 <div id="app" class="app">
 <header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
-<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button><button id="adminNav" data-tab="adminTab" class="hidden">⚙ Администрирование</button></div><div class="hint"></div></aside>
+<div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button><button data-tab="randomizer">🎰 Рандомайзер</button><button id="adminNav" data-tab="adminTab" class="hidden">⚙ Администрирование</button></div><div class="hint"></div></aside>
 <main class="main">
 <section class="panel" id="accountPanel"><div class="panelhead"><div><h2>Облачный аккаунт</h2><div class="sub" id="authStatus">Войди или зарегистрируйся, чтобы сохранять наборы в облаке</div></div><div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-end"><span class="pill" id="cloudBadge">Локальный режим</span><span class="pill" id="planBadge">FREE</span></div></div><div class="formgrid"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Пароль</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 8 символов"></div></div><div class="actions" style="margin-top:12px"><button class="primary" id="signInBtn">Войти</button><button id="signUpBtn">Создать аккаунт</button><button id="signOutBtn" class="hidden">Выйти</button><button id="cloudLoadBtn" class="hidden">Загрузить мои наборы</button></div><div class="sub" id="planDescription" style="margin-top:9px">FREE: до 5 карточек и 1 облачного набора. PRO открывает все функции.</div></section>
 <section class="tab hidden" id="adminTab">
@@ -808,6 +839,34 @@ body.captions-hidden .tile>b{display:none!important}
 <div class="panel"><div class="panelhead"><div><h2>Предпросмотр Overlay</h2><div class="sub">Предпросмотр выбранного стиля отображения подарков-действий</div></div><button id="refreshPreview">Обновить</button></div><div class="preview"><div class="previewlabel">GIFT ACTIONS · LIVE</div><div class="tickerwrap"><div id="previewTicker" class="ticker"></div></div></div></div>
 
 </section>
+
+<section id="randomizer" class="tab hidden">
+ <div class="panel">
+  <div class="panelhead"><div><h2>Рандомайзер</h2><div class="sub">Создай рулетку из карточек любого сохранённого набора</div></div><span class="pill">BETA</span></div>
+  <div class="formgrid">
+   <div class="field"><label>Набор действий</label><select id="randomizerSet"></select></div>
+   <div class="field"><label>Название рандомайзера</label><input id="randomizerName" maxlength="60" placeholder="Например: Испытание на стриме"></div>
+  </div>
+  <div class="notice" style="margin-top:12px">Выбери карточки и задай каждой вес от 1% до 100%. Сумма весов не может превышать 100%. При запуске веса автоматически нормализуются: победитель выпадет обязательно.</div>
+  <div id="randomizerItems" class="randomizer-items" style="margin-top:14px"></div>
+  <div class="randomizer-total"><span>Сумма заданных весов</span><strong id="randomizerTotal">0%</strong><span class="muted" id="randomizerTotalHint">Выбери хотя бы одну карточку</span></div>
+  <div class="actions" style="margin-top:14px">
+   <button class="primary" id="saveRandomizer">Сохранить рандомайзер и создать Overlay</button>
+   <button id="copyRandomizerUrl" disabled>Скопировать ссылку Overlay</button>
+   <button id="openRandomizerUrl" disabled>Открыть Overlay</button>
+  </div>
+  <div class="notice hidden" id="randomizerUrlBox" style="margin-top:12px;word-break:break-all"></div>
+ </div>
+ <div class="panel">
+  <div class="panelhead"><div><h2>Управление розыгрышем</h2><div class="sub">Запуск отсюда — анимация появится в отдельном Overlay</div></div></div>
+  <div class="randomizer-launch">
+   <div><div class="muted small">Последний результат</div><strong id="randomizerWinner">Пока нет результатов</strong></div>
+   <button class="primary" id="launchRandomizer" disabled>▶ Запуск</button>
+  </div>
+  <div class="sub" id="randomizerLaunchHint" style="margin-top:10px">Сначала сохрани рандомайзер и открой Overlay в OBS или TikTok Live Studio.</div>
+ </div>
+</section>
+
 <section id="sets" class="tab hidden"><div class="panel"><div class="panelhead"><div><h2>Мои наборы</h2><div class="sub">Отдельные наборы действий для разных игр</div></div><button id="newSet" class="primary">＋ Новый набор</button></div><div id="setList"></div><div class="actions" style="margin-top:14px"><button id="exportBtn">Экспорт JSON</button><button id="importBtn">Импорт JSON</button><input id="importFile" type="file" accept="application/json" class="hidden"></div></div></section>
 
 <div class="footer">Gift Action Builder</div>
@@ -901,7 +960,7 @@ function updateFreeCardLimitUi(){
  if(add){add.disabled=freeCardLimitReached();add.title=freeCardLimitReached()?'Сначала сократите набор до 5 карточек':''}
 }
 function cloudSetLimitReached(set){return !isPro()&&!set?.cloudId&&state.sets.filter(x=>!!x.cloudId).length>=1}
-function cloudConfig(set){return {actions:set.actions,settings:{...defaultSettings(),...(set.settings||state.settings)}}}
+function cloudConfig(set){return {actions:set.actions,settings:{...defaultSettings(),...(set.settings||state.settings)},randomizer:set.randomizer||null}}
 async function cloudSaveActive(show=true){
  if(!currentUser||cloudBusy)return;
  const set=active();if(!set)return;
@@ -986,7 +1045,7 @@ function authUi(user){
  if(!user)currentLicense={plan:'free',expires_at:null,is_active:false};
  updatePlanUi();
 }
-async function cloudLoadMine(){if(!currentUser)return;const {data,error}=await db.from('gift_sets').select('*').eq('owner_id',currentUser.id).order('updated_at',{ascending:false});if(error){toast('Не удалось загрузить наборы: '+error.message);return}if(!data?.length){toast('В облаке пока нет наборов');return}const sets=data.map(r=>({id:r.id,name:r.title,game:r.game||'',actions:r.config?.actions||[],settings:{...defaultSettings(),...(r.config?.settings||state.settings)},cloudId:r.id,publicId:r.public_id,isPublic:r.is_public}));state.sets=sets;state.activeSet=sets[0].id;activateSetSettings(sets[0]);localStorage.setItem(STORE,JSON.stringify(state));render();toast('Загружено наборов: '+sets.length)}
+async function cloudLoadMine(){if(!currentUser)return;const {data,error}=await db.from('gift_sets').select('*').eq('owner_id',currentUser.id).order('updated_at',{ascending:false});if(error){toast('Не удалось загрузить наборы: '+error.message);return}if(!data?.length){toast('В облаке пока нет наборов');return}const sets=data.map(r=>({id:r.id,name:r.title,game:r.game||'',actions:r.config?.actions||[],settings:{...defaultSettings(),...(r.config?.settings||state.settings)},randomizer:r.config?.randomizer||null,cloudId:r.id,publicId:r.public_id,isPublic:r.is_public}));state.sets=sets;state.activeSet=sets[0].id;activateSetSettings(sets[0]);localStorage.setItem(STORE,JSON.stringify(state));render();toast('Загружено наборов: '+sets.length)}
 async function publishActive(){
  if(!currentUser){toast('Сначала войди в облачный аккаунт');return false}
  const set=active();
@@ -1110,7 +1169,7 @@ function toast(s){$('toast').textContent=s;$('toast').style.display='block';setT
 function render(){
  const s=active();activateSetSettings(s);$('setName').value=s.name;$('giftCount').textContent=s.actions.length+' действий';
  $('actionList').innerHTML=s.actions.length?s.actions.map(a=>{const g=giftById(a.giftIndex);return `<div class="giftcard ${a.hidden?'action-hidden':''}"><img src="${triggerIconFor(a,g)}" alt=""><div class="detail"><strong>${esc(g.name)}</strong><div class="sub">${giftPrice(g.name)===null?'Цена неизвестна':giftPrice(g.name)+' монет'}${a.hidden?' · Скрыто из Overlay':''}</div><div class="action">${esc(a.action)}</div></div><div class="tools"><button data-up="${a.id}" title="Переместить выше" ${s.actions.indexOf(a)===0?'disabled':''}>↑</button><button data-down="${a.id}" title="Переместить ниже" ${s.actions.indexOf(a)===s.actions.length-1?'disabled':''}>↓</button><button data-edit="${a.id}" title="Редактировать">✎</button><button data-hide="${a.id}" title="${a.hidden?'Показать действие в Overlay':'Скрыть действие из Overlay'}">${a.hidden?'◉':'⊘'}</button><button class="danger" data-del="${a.id}" title="Удалить">×</button></div></div>`}).join(''):`<div class="empty">Пока нет действий. Нажми «Добавить действие», выбери подарок из каталога и впиши подпись.</div>`;
- renderTicker();renderSets();syncControls();updateFreeCardLimitUi();
+ renderTicker();renderSets();syncControls();updateFreeCardLimitUi();if(!$('randomizer').classList.contains('hidden'))renderRandomizer();
 }
 function tickerMarkup(){
  const actions=active().actions.filter(a=>!a.hidden),imageMode=state.settings.imageMode==='on';
@@ -1315,8 +1374,129 @@ function recolorGlassIn(root){
  root.querySelectorAll?.('.panel-art').forEach(applyGlassTint);
 }
 function applyStyle(el){ensureGlassTintObserver();recolorGlassIn(el);el.style.setProperty('--panel-hue',panelHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--glass-hue',glassHue(state.settings.panelColor||'#6d83ff')+'deg');el.style.setProperty('--panel-width',(state.settings.panelWidth||150)+'px');el.style.setProperty('--panel-height',(state.settings.panelHeight||126)+'px');el.style.setProperty('--duration',state.settings.speed+'s');el.style.setProperty('--gap',state.settings.spacing+'px');el.style.setProperty('--icon-size',state.settings.iconSize+'px');el.style.setProperty('--text-size',state.settings.textSize+'px');el.style.setProperty('--text-offset',(Number(state.settings.textOffset)||0)+'px');el.style.setProperty('--gift-pos-x',(Number(state.settings.giftPosX)||0)+'px');el.style.setProperty('--gift-pos-y',(Number(state.settings.giftPosY)||0)+'px');el.style.setProperty('--gift-badge-size',Math.max(20,Math.min(150,Number(state.settings.iconSize)||64))+'px');el.style.setProperty('--action-image-size',Math.max(24,Math.min(150,Number(state.settings.actionImageSize)||80))+'px');el.style.setProperty('--action-image-pos-x',(Number(state.settings.actionImagePosX)||0)+'px');el.style.setProperty('--action-image-pos-y',(Number(state.settings.actionImagePosY)||0)+'px');el.style.setProperty('--tile-width',Math.max(state.settings.iconSize+20,100)+'px');el.style.setProperty('--rotator-card-width',((state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-card-width',((state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100))+'px');el.style.setProperty('--grid-columns',Math.max(1,Math.min(12,Number(state.settings.gridColumns)||5)));el.style.setProperty('--grid-column-gap',(Number(state.settings.gridColumnGap)||0)+'px');el.style.setProperty('--grid-row-gap',(Number(state.settings.gridRowGap)||0)+'px');el.style.setProperty('--font-family',state.settings.fontFamily||'Inter, sans-serif');const outlined=!!state.settings.textOutline;el.style.setProperty('--outline-width','0px');el.style.setProperty('--outline-shadow',outlined?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none')}
+
+// Randomizer: one independently configured roulette per saved action set.
+let randomizerOverlayUrl='';
+function randomizerSet(){return state.sets.find(s=>String(s.id)===$('randomizerSet')?.value)||active()}
+function randomizerEntries(set){
+ const cfg=set?.randomizer;
+ return Array.isArray(cfg?.items)?cfg.items:[];
+}
+function renderRandomizer(){
+ const select=$('randomizerSet');if(!select)return;
+ const previous=select.value;
+ select.innerHTML=state.sets.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+ select.value=state.sets.some(s=>String(s.id)===previous)?previous:String(active()?.id||state.sets[0]?.id||'');
+ const set=randomizerSet();if(!set)return;
+ const cfg=set.randomizer||{};
+ $('randomizerName').value=cfg.name||set.name+' — Рандомайзер';
+ const saved=new Map(randomizerEntries(set).map(x=>[String(x.actionId),Number(x.weight)||1]));
+ $('randomizerItems').innerHTML=set.actions.length?set.actions.map(a=>{
+  const g=giftById(a.giftIndex)||{name:'Неизвестная карточка',src:''};
+  const weight=saved.get(String(a.id));
+  const checked=weight!==undefined;
+  return `<label class="randomizer-item"><input type="checkbox" data-rcheck="${esc(a.id)}" ${checked?'checked':''} aria-label="Добавить карточку"><img src="${esc(triggerIconFor(a,g))}" alt=""><span class="r-name">${esc(g.name)}<small class="sub" style="display:block">${esc(a.action)}</small></span><input type="number" data-rweight="${esc(a.id)}" min="1" max="100" step="1" value="${checked?weight:10}" ${checked?'':'disabled'} aria-label="Вес карточки в процентах"><span class="r-prob" data-rprob="${esc(a.id)}">${checked?'—':'Не участвует'}</span></label>`;
+ }).join(''):'<div class="empty">В выбранном наборе пока нет карточек.</div>';
+ $('randomizerWinner').textContent=cfg.lastWinnerName||'Пока нет результатов';
+ const randomizerPublicId=cfg.publicId||set.publicId||'';randomizerOverlayUrl=randomizerPublicId?location.href.split('?')[0]+'?randomizer='+randomizerPublicId:'';
+ const ready=!!randomizerOverlayUrl;
+ $('copyRandomizerUrl').disabled=!ready;$('openRandomizerUrl').disabled=!ready;
+ $('randomizerUrlBox').classList.toggle('hidden',!ready);
+ $('randomizerUrlBox').textContent=ready?'Overlay: '+randomizerOverlayUrl:'';
+ $('launchRandomizer').disabled=!ready;
+ $('randomizerLaunchHint').textContent=ready?'Нажми «Запуск» — рулетка прокрутится в открытом Overlay.':'Сначала сохрани рандомайзер и создай отдельную ссылку Overlay.';
+ updateRandomizerTotals();
+}
+function updateRandomizerTotals(){
+ const rows=[...document.querySelectorAll('[data-rcheck]:checked')];
+ let total=0;const values=[];
+ for(const cb of rows){
+  const id=cb.dataset.rcheck,field=document.querySelector(`[data-rweight="${CSS.escape(id)}"]`);
+  const w=Math.max(1,Math.min(100,Math.round(Number(field?.value)||1)));
+  total+=w;values.push({id,w});
+ }
+ for(const v of values){
+  const out=document.querySelector(`[data-rprob="${CSS.escape(v.id)}"]`);
+  if(out)out.textContent=total?`Факт. шанс: ${(v.w/total*100).toFixed(2)}%`:'—';
+ }
+ const totalEl=$('randomizerTotal'),hint=$('randomizerTotalHint');
+ totalEl.textContent=total+'%';totalEl.parentElement.classList.toggle('over',total>100);
+ hint.textContent=total>100?'Сумма превышает 100%':total===0?'Выбери хотя бы одну карточку':'Нормализованный шанс рассчитан от суммы весов';
+ $('saveRandomizer').disabled=total===0||total>100;
+}
+$('randomizerSet').onchange=renderRandomizer;
+$('randomizerItems').addEventListener('change',e=>{
+ const cb=e.target.closest('[data-rcheck]');
+ if(cb){const field=document.querySelector(`[data-rweight="${CSS.escape(cb.dataset.rcheck)}"]`);if(field)field.disabled=!cb.checked}
+ updateRandomizerTotals();
+});
+$('randomizerItems').addEventListener('input',e=>{
+ const field=e.target.closest('[data-rweight]');if(field){field.value=String(Math.max(1,Math.min(100,Math.round(Number(field.value)||1))))}
+ updateRandomizerTotals();
+});
+function collectRandomizerItems(){
+ const out=[];
+ document.querySelectorAll('[data-rcheck]:checked').forEach(cb=>{
+  const id=cb.dataset.rcheck,field=document.querySelector(`[data-rweight="${CSS.escape(id)}"]`);
+  out.push({actionId:id,weight:Math.max(1,Math.min(100,Math.round(Number(field?.value)||1)))});
+ });
+ return out;
+}
+async function publishRandomizer(set){
+ if(!currentUser){toast('Войди в аккаунт, чтобы создать Overlay рандомайзера');return null}
+ if(!set.cloudId){const ok=await cloudSaveActive(false);if(!ok||!set.cloudId){toast('Сначала сохрани набор действий в облако');return null}}
+ const {data:row,error}=await db.from('gift_sets').select('public_id,is_public').eq('id',set.cloudId).eq('owner_id',currentUser.id).single();
+ if(error||!row){toast('Не удалось подготовить Overlay: '+(error?.message||'набор не найден'));return null}
+ const publicId=row.public_id||set.publicId||crypto.randomUUID();
+ if(!row.is_public||!row.public_id){
+  const {error:pubError}=await db.from('gift_sets').update({is_public:true,public_id:publicId}).eq('id',set.cloudId).eq('owner_id',currentUser.id);
+  if(pubError){toast('Не удалось опубликовать Overlay: '+pubError.message);return null}
+ }
+ set.publicId=publicId;set.isPublic=true;set.randomizer.publicId=publicId;
+ localStorage.setItem(STORE,JSON.stringify(state));
+ return location.href.split('?')[0]+'?randomizer='+publicId;
+}
+$('saveRandomizer').onclick=async()=>{
+ const set=randomizerSet();if(!set)return;
+ const items=collectRandomizerItems(),total=items.reduce((n,x)=>n+x.weight,0);
+ if(!items.length||total>100){toast('Выбери карточки. Сумма весов должна быть от 1% до 100%.');return}
+ state.activeSet=set.id;activateSetSettings(set);
+ set.randomizer={...(set.randomizer||{}),name:$('randomizerName').value.trim()||set.name+' — Рандомайзер',items,updatedAt:new Date().toISOString()};
+ localStorage.setItem(STORE,JSON.stringify(state));
+ if(!currentUser){toast('Для отдельного Overlay войди в аккаунт и сохрани набор в облако');renderRandomizer();return}
+ const saved=await cloudSaveActive(false);
+ if(!saved){toast('Не удалось сохранить настройки в облако');return}
+ const url=await publishRandomizer(set);
+ if(!url)return;
+ randomizerOverlayUrl=url;renderRandomizer();toast('Рандомайзер сохранён. Отдельный Overlay создан.');
+};
+$('copyRandomizerUrl').onclick=async()=>{if(!randomizerOverlayUrl)return;try{await navigator.clipboard.writeText(randomizerOverlayUrl);toast('Ссылка Overlay скопирована')}catch{prompt('Скопируй ссылку Overlay:',randomizerOverlayUrl)}};
+$('openRandomizerUrl').onclick=()=>{if(randomizerOverlayUrl)window.open(randomizerOverlayUrl,'_blank')};
+function pickWeightedRandom(items){
+ const total=items.reduce((n,x)=>n+x.weight,0);
+ let r=Math.random()*total;
+ for(const item of items){r-=item.weight;if(r<0)return item}
+ return items[items.length-1];
+}
+$('launchRandomizer').onclick=async()=>{
+ const set=randomizerSet();if(!set?.cloudId||!set.randomizer?.publicId){toast('Сначала сохрани рандомайзер');return}
+ const items=(set.randomizer.items||[]).map(x=>({...x,weight:Number(x.weight)||1})).filter(x=>set.actions.some(a=>String(a.id)===String(x.actionId)));
+ if(!items.length){toast('В рандомайзере нет доступных карточек');return}
+ const total=items.reduce((n,x)=>n+x.weight,0);
+ if(total>100){toast('Сумма весов превышает 100%');return}
+ const chosen=pickWeightedRandom(items),winner=set.actions.find(a=>String(a.id)===String(chosen.actionId));
+ if(!winner){toast('Не удалось определить победителя');return}
+ set.randomizer.run={id:crypto.randomUUID(),winnerActionId:winner.id,startedAt:new Date().toISOString()};
+ set.randomizer.lastWinnerName=winner.action;
+ state.activeSet=set.id;activateSetSettings(set);localStorage.setItem(STORE,JSON.stringify(state));
+ const ok=await cloudSaveActive(false);
+ if(!ok){toast('Не удалось отправить запуск в Overlay');return}
+ $('randomizerWinner').textContent=winner.action;
+ toast('Запуск отправлен в Overlay');
+};
+
 function renderSets(){$('setList').innerHTML=state.sets.map(s=>`<div class="setcard ${s.id===state.activeSet?'is-active':''}"><div class="setdetail"><strong>${esc(s.name)}</strong><div class="sub">${s.actions.length} действий${s.id===state.activeSet?' · Активный набор':''}${s.publicId?' · Overlay опубликован':''}</div></div><div class="setactions"><button data-load="${s.id}" onclick="window.openSavedSet(decodeURIComponent('${encodeURIComponent(s.id)}'))" ${s.id===state.activeSet?'disabled':''}>${s.id===state.activeSet?'Выбран':'Открыть'}</button><button data-setcopy="${s.id}">Копировать</button>${state.sets.length>1?`<button class="danger" data-setdel="${s.id}">Удалить</button>`:''}</div></div>`).join('')}
-function switchTab(id){if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
+function switchTab(id){if(id==='adminTab'&&!isAdmin())id='builder';document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('hidden',t.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='randomizer')renderRandomizer()}
 window.openSavedSet = function(id){
  const target=state.sets.find(item=>String(item.id)===String(id));
  if(!target){toast('Не удалось найти этот набор');return false}
@@ -1585,6 +1765,62 @@ $('applyOverlay').onclick=async()=>{
 function overlayUrl(){return location.href.split('?')[0]+'?overlay=1'}
 $('copyOverlay').onclick=async()=>{const url=await ensurePublishedOverlay();if(!url)return;try{await navigator.clipboard.writeText(url);toast('Уникальная ссылка Overlay этого набора скопирована')}catch{prompt('Скопируй ссылку Overlay:',url)}};
 $('openOverlay').onclick=async()=>{const url=await ensurePublishedOverlay();if(url)window.open(url,'_blank')};
+
+async function randomizerOverlayMode(){
+ document.body.className='overlay';
+ const app=$('app');if(app)app.remove();const toastEl=$('toast');if(toastEl)toastEl.remove();
+ const root=document.createElement('div');root.className='roulette-page';
+ root.innerHTML='<div class="roulette-shell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div></div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div>';
+ document.body.append(root);
+ const publicId=new URLSearchParams(location.search).get('randomizer');
+ let lastRunId='',busy=false;
+ async function draw(){
+  const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
+  if(error||!data){root.innerHTML='<div class="roulette-empty">Не удалось загрузить рандомайзер</div>';return}
+  const cfg=data.config||{},rand=cfg.randomizer||{};
+  const allActions=cfg.actions||[],items=rand.items||[];
+  const selected=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))})).filter(x=>x.action);
+  if(!selected.length){root.innerHTML='<div class="roulette-empty">Рандомайзер ещё не настроен</div>';return}
+  state={activeSet:'roulette',sets:[{id:'roulette',name:data.title,actions:selected.map(x=>({...x.action,hidden:false})),settings:{...defaultSettings(),...(cfg.settings||{})}}],settings:{...defaultSettings(),...(cfg.settings||{})}};
+  const track=$('rouletteTrack');if(!track)return;
+  if(!track.children.length){
+   const markup=tickerMarkup();
+   const cards=Array.from((()=>{const d=document.createElement('div');d.innerHTML=markup;return d})().children);
+   const sequence=[];
+   for(let i=0;i<24;i++)sequence.push(...cards.map(c=>c.cloneNode(true)));
+   track.innerHTML=sequence.map(c=>c.outerHTML).join('');
+   applyStyle(track);recolorGlassIn(track);
+   const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100);
+   track.style.setProperty('--roulette-card-width',cardWidth+'px');
+   track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+  }
+  if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
+   lastRunId=rand.run.id;busy=true;
+   const winnerIndex=selected.findIndex(x=>String(x.action.id)===String(rand.run.winnerActionId));
+   if(winnerIndex<0){busy=false;return}
+   const cards=[...track.children],n=selected.length,cycle=21;
+   const target=cycle*n+winnerIndex,card=cards[target],windowEl=$('rouletteWindow');
+   if(!card){busy=false;return}
+   track.style.transition='none';
+   const first=cards[0],startX=first.offsetLeft+first.offsetWidth/2-windowEl.clientWidth/2;
+   track.style.transform=`translateX(${-startX}px)`;
+   void track.offsetWidth;
+   const endX=card.offsetLeft+card.offsetWidth/2-windowEl.clientWidth/2;
+   requestAnimationFrame(()=>{
+    track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
+    track.style.transform=`translateX(${-endX}px)`;
+   });
+   setTimeout(()=>{
+    const frame=$('rouletteWinnerFrame');
+    if(frame){frame.hidden=false;frame.style.left='50%';frame.style.top='50%';frame.style.width=card.offsetWidth+'px';frame.style.height=card.offsetHeight+'px'}
+    root.classList.add('has-winner');
+    busy=false;
+   },7350);
+  }
+ }
+ await draw();setInterval(draw,900);
+}
+
 function overlayMode(){
  document.body.className='overlay';
  $('app').remove();$('toast').remove();
@@ -1622,5 +1858,5 @@ function overlayMode(){
  awaitOverlayInitial();
  async function awaitOverlayInitial(){await draw();setInterval(draw,5000)}
 }
-if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
+if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode();else if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
 </script></body></html>
