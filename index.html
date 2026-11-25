@@ -774,12 +774,12 @@ body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!im
 #randomizerCardPreview .tile.image-mode .gift-art{position:absolute!important;left:auto!important;right:8px!important;top:8px!important;width:var(--icon-size,64px)!important;height:var(--icon-size,64px)!important;max-width:none!important;max-height:none!important;object-fit:contain!important;z-index:3!important}
 #randomizerCardPreview .tile.image-mode b{position:absolute!important;left:50%!important;bottom:5px!important;top:auto!important;transform:translateX(-50%)!important;width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;text-align:center!important;z-index:4!important}
 </style><style id="randomizer-editor-layout">
-#randomizerCardPanel .randomizer-card-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,230px);gap:16px;align-items:start}
+#randomizerCardPanel .randomizer-card-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);gap:16px;align-items:start}
 #randomizerCardPanel .randomizer-card-gift-select{min-width:0}
 #randomizerCardPanel .randomizer-card-preview-wrap{min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#100e18}
 #randomizerCardPanel .randomizer-card-preview-wrap>label{display:block;margin-bottom:8px}
-#randomizerCardPanel .randomizer-card-preview.compact{min-height:130px;max-height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px}
-#randomizerCardPanel .randomizer-card-preview.compact .tile{transform:scale(.78);transform-origin:center;max-width:100%}
+#randomizerCardPanel .randomizer-card-preview.compact{min-height:260px;max-height:280px;display:flex;align-items:center;justify-content:center;overflow:auto;padding:8px;box-sizing:border-box}
+#randomizerCardPanel .randomizer-card-preview.compact .tile{transform:none!important;transform-origin:center;flex:none!important}
 #randomizerCardPanel .randomizer-fold{border:1px solid var(--line);border-radius:12px;padding:0;background:rgba(255,255,255,.02)}
 #randomizerCardPanel .randomizer-fold>summary{cursor:pointer;list-style:none;padding:12px 14px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px}
 #randomizerCardPanel .randomizer-fold>summary::-webkit-details-marker{display:none}
@@ -787,6 +787,54 @@ body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!im
 #randomizerCardPanel .randomizer-fold:not([open])>summary:after{transform:rotate(-90deg)}
 #randomizerCardPanel .randomizer-fold-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 12px 12px}
 @media(max-width:700px){#randomizerCardPanel .randomizer-card-top{grid-template-columns:1fr}#randomizerCardPanel .randomizer-card-preview-wrap{max-width:100%}}
+</style>
+<style id="randomizer-preview-overlay-parity">
+/* The editor preview must render the card at the same scale and coordinates as the live overlay. */
+#randomizerCardPreview .tile.image-mode,
+body.overlay #randomizerWaitCard .tile.image-mode{
+  position:relative!important;display:block!important;
+  width:var(--panel-width,150px)!important;height:var(--panel-height,126px)!important;
+  min-width:var(--panel-width,150px)!important;min-height:var(--panel-height,126px)!important;
+  max-width:none!important;max-height:none!important;padding:0!important;box-sizing:border-box!important;
+}
+#randomizerCardPreview .tile.image-mode .action-art,
+body.overlay #randomizerWaitCard .tile.image-mode .action-art{
+  position:absolute!important;left:50%!important;top:50%!important;
+  transform:translate(calc(-50% + var(--action-image-pos-x,0px)),calc(-50% - var(--action-image-pos-y,0px)))!important;
+  width:var(--action-image-size,80px)!important;height:var(--action-image-size,80px)!important;
+  min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;z-index:2!important;
+}
+#randomizerCardPreview .tile.image-mode .gift-art,
+body.overlay #randomizerWaitCard .tile.image-mode .gift-art{
+  position:absolute!important;left:auto!important;right:8px!important;top:8px!important;bottom:auto!important;
+  transform:translate(var(--gift-pos-x,0px),calc(0px - var(--gift-pos-y,0px)))!important;
+  width:var(--gift-badge-size,36px)!important;height:var(--gift-badge-size,36px)!important;
+  min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;z-index:3!important;
+}
+#randomizerCardPreview .tile.image-mode>b,
+body.overlay #randomizerWaitCard .tile.image-mode>b{
+  position:absolute!important;left:50%!important;right:auto!important;top:auto!important;bottom:5px!important;
+  transform:translate(-50%,calc(0px - var(--text-offset,0px)))!important;
+  width:calc(100% - 12px)!important;max-width:calc(100% - 12px)!important;
+  text-align:center!important;z-index:4!important;box-sizing:border-box!important;
+  font-family:var(--font-family,Inter,sans-serif)!important;font-size:var(--text-size,12px)!important;
+}
+/* Keep non-image cards at native dimensions too; only the preview frame itself is compact. */
+#randomizerCardPreview .tile:not(.graphic-tile){
+  width:var(--panel-width,150px)!important;min-width:var(--panel-width,150px)!important;
+  max-width:var(--panel-width,150px)!important;height:var(--panel-height,126px)!important;
+  min-height:var(--panel-height,126px)!important;max-height:var(--panel-height,126px)!important;
+  box-sizing:border-box!important;
+}
+#randomizerCardPanel .randomizer-caption-field{margin-top:14px;width:100%;max-width:100%;min-width:0}
+#randomizerCardPanel .randomizer-caption-field label{display:block;margin-bottom:6px}
+#randomizerCardPanel .randomizer-caption-field textarea{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;resize:vertical}
+@media(max-width:760px){
+ #randomizerCardPanel .randomizer-card-top{grid-template-columns:minmax(0,1fr)}
+ #randomizerCardPanel .randomizer-card-preview-wrap{width:100%;box-sizing:border-box}
+}
 </style>
 </head><body>
 <div id="app" class="app">
@@ -912,10 +960,10 @@ body.overlay .tile.image-mode .action-art{width:var(--action-image-size,80px)!im
   <div class="formgrid">
    <div class="field full randomizer-settings-heading">Содержимое карточки</div>
    <div class="field full randomizer-card-top">
-    <div class="randomizer-card-gift-select"><label>Подарок, который отвечает за карточку</label><div class="row" style="flex-wrap:wrap"><input type="hidden" id="randomizerCardGift" value="0"><button type="button" id="openRandomizerGiftCatalog">Выбрать подарок из каталога</button><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"><strong id="randomizerCardGiftName" class="grow">Rose</strong></div></div>
+    <div class="randomizer-card-gift-select"><label>Подарок, который отвечает за карточку</label><div class="row" style="flex-wrap:wrap"><input type="hidden" id="randomizerCardGift" value="0"><button type="button" id="openRandomizerGiftCatalog">Выбрать подарок из каталога</button><img id="randomizerCardGiftIcon" alt="" style="width:54px;height:54px;object-fit:contain;background:#100e18;border:1px solid var(--line);border-radius:10px;padding:4px"><strong id="randomizerCardGiftName" class="grow">Rose</strong></div><div class="randomizer-caption-field"><label for="randomizerCardName">Название карточки (подпись)</label><textarea id="randomizerCardName" maxlength="90" rows="2" placeholder="Например: ЗАПУСК РАНДОМАЙЗЕРА"></textarea></div></div>
     <div class="randomizer-card-preview-wrap"><label>Предпросмотр карточки</label><div class="randomizer-card-preview compact" id="randomizerCardPreview"></div></div>
    </div>
-   <div class="field full"><label>Название карточки (подпись)</label><textarea id="randomizerCardName" maxlength="90" rows="2" style="width:100%;resize:vertical" placeholder="Например: ЗАПУСК РАНДОМАЙЗЕРА"></textarea></div>
+
    <details class="field full randomizer-fold" open><summary>Размеры и оформление карточки</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Оформление карточки</label><select id="randomizerCardStyle"><option value="standard">Без стиля</option><option value="graphic">Жидкое стекло</option><option value="tile">Плитка</option><option value="neon">Неон</option></select></div>
    <div class="field"><label>Режим отображения</label><select id="randomizerCardImageMode"><option value="off">Без изображения</option><option value="on">С изображением</option></select></div>
