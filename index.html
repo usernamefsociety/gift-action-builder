@@ -1724,22 +1724,48 @@ function renderRandomizer(){
  updateRandomizerTotals();renderRandomizerHistory(set);renderRandomizerOverlayPreview(set);
 }
 let randomizerPreviewTimer=null;
+// Build one long, genuinely shuffled roulette strip whose card counts follow the saved weights.
+function buildWeightedRouletteSequence(entries){
+ const valid=entries.filter(x=>x?.action&&Number(x.item?.weight)>0);
+ if(!valid.length)return [];
+ const totalWeight=valid.reduce((sum,x)=>sum+Number(x.item.weight),0);
+ const slots=Math.max(240,valid.length*24);
+ const raw=valid.map(x=>Number(x.item.weight)/totalWeight*slots);
+ const counts=raw.map(Math.floor);
+ let remaining=slots-counts.reduce((a,b)=>a+b,0);
+ const byRemainder=raw.map((v,i)=>({i,r:v-counts[i]})).sort((a,b)=>b.r-a.r);
+ for(let j=0;j<remaining;j++)counts[byRemainder[j%byRemainder.length].i]++;
+ // Keep every selected card visible at least once, borrowing slots from the most represented cards.
+ for(let i=0;i<counts.length;i++){
+  if(counts[i]!==0)continue;
+  let donor=-1;
+  for(let j=0;j<counts.length;j++)if(counts[j]>1&&(donor<0||counts[j]>counts[donor]))donor=j;
+  if(donor>=0){counts[donor]--;counts[i]++;}
+ }
+ const sequence=[];
+ valid.forEach((entry,i)=>{for(let n=0;n<counts[i];n++)sequence.push(entry.action)});
+ // Fisher–Yates gives a new arrangement on every page load / preview render.
+ for(let i=sequence.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[sequence[i],sequence[j]]=[sequence[j],sequence[i]];}
+ return sequence;
+}
 function renderRandomizerOverlayPreview(set){
  const wait=$('randomizerPreviewWait'),track=$('randomizerPreviewTrack'),winner=$('randomizerPreviewWinner');if(!wait||!track)return;
  wait.innerHTML=randomizerCardMarkup(randomizerCardConfig(set));
- const items=(set.randomizer?.items||[]).map(x=>set.actions.find(a=>String(a.id)===String(x.actionId))).filter(Boolean);
- const old=state.activeSet,oldSettings=state.settings;state.activeSet=set.id;activateSetSettings(set);
- const markup=tickerMarkup();state.activeSet=old;state.settings=oldSettings;
+ const entries=(set.randomizer?.items||[]).map(item=>{const action=set.actions.find(a=>String(a.id)===String(item.actionId));return action?{item,action:{...action,hidden:false}}:null}).filter(Boolean);
+ const sequence=buildWeightedRouletteSequence(entries);
+ const old=state.activeSet,oldSettings=state.settings,oldActions=set.actions;
+ state.activeSet=set.id;activateSetSettings(set);const previewSettings={...state.settings};set.actions=sequence;
+ const markup=tickerMarkup();set.actions=oldActions;state.activeSet=old;state.settings=oldSettings;
  const holder=document.createElement('div');holder.innerHTML=markup;
  const cards=[...holder.children];track.innerHTML='';
  if(cards.length){
-  for(let i=0;i<5;i++)cards.forEach(c=>track.append(c.cloneNode(true)));
+  cards.forEach(c=>track.append(c.cloneNode(true)));
   applyStyle(track);recolorGlassIn(track);
-  const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')
-    ?(Number(state.settings.panelWidth)||150)
-    :Math.max((Number(state.settings.iconSize)||64)+20,100);
+  const cardWidth=(previewSettings.cardStyle==='graphic'||previewSettings.cardStyle==='tile'||previewSettings.cardStyle==='neon')
+    ?(Number(previewSettings.panelWidth)||150)
+    :Math.max((Number(previewSettings.iconSize)||64)+20,100);
   track.style.setProperty('--roulette-card-width',cardWidth+'px');
-  track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+  track.style.setProperty('--roulette-card-height',(Number(previewSettings.panelHeight)||126)+'px');
  }
  track.style.transform='translateX(0)';track.style.transition='none';
  if(winner)winner.classList.remove('show');
@@ -2141,9 +2167,18 @@ async function randomizerOverlayMode(){
  root.innerHTML='<div id="randomizerWaitCard"></div><div class="roulette-shell is-hidden" id="rouletteShell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div></div>';
  document.body.append(root);
  const publicId=new URLSearchParams(location.search).get('randomizer');
- let lastRunId='',initialized=false,busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null;
+ let lastRunId='',initialized=false,busy=false,spinTimer=null,resultTimer=null,returnTimer=null,latestData=null,rouletteSequence=[];
  const waitCard=$('randomizerWaitCard'),shell=$('rouletteShell');
  function showWaitingCard(cfg){waitCard.innerHTML=randomizerCardMarkup(cfg);waitCard.style.display='';waitCard.querySelector('.tile')?.classList.remove('is-hidden');shell.classList.remove('is-visible');shell.classList.add('is-hidden')}
+ function buildRouletteStrip(selected){
+  const track=$('rouletteTrack');if(!track)return;
+  rouletteSequence=buildWeightedRouletteSequence(selected);
+  const originalActions=state.sets[0].actions;state.sets[0].actions=rouletteSequence;
+  const markup=tickerMarkup();state.sets[0].actions=originalActions;
+  track.innerHTML=markup;applyStyle(track);recolorGlassIn(track);
+  const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100);
+  track.style.setProperty('--roulette-card-width',cardWidth+'px');track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
+ }
  function fadeToRoulette(){
   const card=waitCard.querySelector('.tile');
   if(card)card.classList.add('is-hidden');
@@ -2177,13 +2212,7 @@ async function randomizerOverlayMode(){
   showWaitingCard(cardCfg);
   state={activeSet:'roulette',sets:[{id:'roulette',name:data.title,actions:selected.map(x=>({...x.action,hidden:false})),settings:{...defaultSettings(),...(cfg.settings||{})}}],settings:{...defaultSettings(),...(cfg.settings||{})}};
   const track=$('rouletteTrack');if(!track)return;
-  const markup=tickerMarkup(),cards=Array.from((()=>{const d=document.createElement('div');d.innerHTML=markup;return d})().children);
-  if(!track.children.length){
-   const sequence=[];for(let i=0;i<24;i++)sequence.push(...cards.map(c=>c.cloneNode(true)));
-   track.innerHTML=sequence.map(c=>c.outerHTML).join('');applyStyle(track);recolorGlassIn(track);
-   const cardWidth=(state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')?(Number(state.settings.panelWidth)||150):Math.max((Number(state.settings.iconSize)||64)+20,100);
-   track.style.setProperty('--roulette-card-width',cardWidth+'px');track.style.setProperty('--roulette-card-height',(Number(state.settings.panelHeight)||126)+'px');
-  }
+  if(!track.children.length)buildRouletteStrip(selected);
   // On the first load, adopt the already saved run as the baseline.
   // A published overlay must show its waiting card, not replay the previous spin.
   if(!initialized){
@@ -2192,10 +2221,13 @@ async function randomizerOverlayMode(){
    return;
   }
   if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
-   lastRunId=rand.run.id;busy=true;fadeToRoulette();
-   const winnerIndex=selected.findIndex(x=>String(x.action.id)===String(rand.run.winnerActionId));
-   if(winnerIndex<0){busy=false;return}
-   const nodes=[...track.children],n=selected.length,cycle=21,target=cycle*n+winnerIndex,card=nodes[target],windowEl=$('rouletteWindow');
+   lastRunId=rand.run.id;busy=true;buildRouletteStrip(selected);fadeToRoulette();
+   const nodes=[...track.children],windowEl=$('rouletteWindow');
+   const winnerPositions=rouletteSequence.map((action,index)=>String(action.id)===String(rand.run.winnerActionId)?index:-1).filter(index=>index>=0);
+   if(!winnerPositions.length){busy=false;return}
+   const desired=Math.floor(rouletteSequence.length*.78);
+   const target=winnerPositions.reduce((best,index)=>Math.abs(index-desired)<Math.abs(best-desired)?index:best,winnerPositions[0]);
+   const card=nodes[target];
    if(!card){busy=false;return}
    const frame=$('rouletteWinnerFrame');if(frame)frame.hidden=true;root.classList.remove('has-winner');
    track.style.transition='none';track.style.transform='translateX(0)';
