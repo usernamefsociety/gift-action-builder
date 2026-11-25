@@ -6952,23 +6952,48 @@ async function randomizerOverlayMode(){
    if(playback&&playback.catch)playback.catch(cleanup);
   }catch(_e){}
  }
+ let tickRaf=0;
  function stopRouletteTicks(){
   if(tickTimer)clearTimeout(tickTimer);
-  tickTimer=null;
+  if(tickRaf)cancelAnimationFrame(tickRaf);
+  tickTimer=null;tickRaf=0;
   for(const voice of tickVoices){try{voice.pause();voice.currentTime=0;}catch(_e){}}
   tickVoices.length=0;
  }
- function startRouletteTicks(){
-  stopRouletteTicks();tickElapsed=0;
-  const scheduleTick=()=>{
-   if(tickElapsed>=7200){tickTimer=null;return;}
-   playRouletteTick();
-   const progress=Math.min(1,tickElapsed/7200);
-   const interval=90+650*Math.pow(progress,2.5);
-   tickElapsed+=interval;
-   tickTimer=setTimeout(scheduleTick,interval);
+ // Play one click exactly when a card's center crosses the roulette pointer.
+ // The scroll position is read from the browser's actual interpolated CSS transform,
+ // not estimated from elapsed time, so the sound follows the real easing curve.
+ function startRouletteTicks(track,windowEl,nodes){
+  stopRouletteTicks();
+  if(!track||!windowEl||!nodes||!nodes.length)return;
+  const pointerX=windowEl.clientWidth/2;
+  let nextIndex=0;
+  const readTranslateX=()=>{
+   const transform=getComputedStyle(track).transform;
+   if(!transform||transform==='none')return 0;
+   try{return new DOMMatrixReadOnly(transform).m41;}catch(_e){
+    const values=transform.match(/matrix(?:3d)?\(([^)]+)\)/);
+    if(!values)return 0;
+    const parts=values[1].split(',').map(Number);
+    return parts.length===16?parts[12]:(parts[4]||0);
+   }
   };
-  scheduleTick();
+  const checkCrossings=()=>{
+   tickRaf=0;
+   const translateX=readTranslateX();
+   const centerInTrack=pointerX-translateX;
+   // A card is counted once, at the first rendered frame where its center
+   // reaches or passes the pointer. while handles dropped frames safely.
+   while(nextIndex<nodes.length){
+    const card=nodes[nextIndex];
+    const cardCenter=card.offsetLeft+card.offsetWidth/2;
+    if(centerInTrack+0.5<cardCenter)break;
+    playRouletteTick();
+    nextIndex++;
+   }
+   if(nextIndex<nodes.length)tickRaf=requestAnimationFrame(checkCrossings);
+  };
+  tickRaf=requestAnimationFrame(checkCrossings);
  }
  function playWinnerSound(){
   if(!winnerAudio)return;
@@ -7056,7 +7081,7 @@ async function randomizerOverlayMode(){
     track.addEventListener('transitionend',onEnd);
     transitionFallback=setTimeout(finish,7900);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
-     startRouletteTicks();
+     startRouletteTicks(track,windowEl,nodes);
      track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
      track.style.transform=`translate3d(${-endX}px,0,0)`;
     }));
