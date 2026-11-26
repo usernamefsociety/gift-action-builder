@@ -6690,8 +6690,20 @@ $('launchRandomizer').onclick=async()=>{
  set.randomizer.history=Array.isArray(set.randomizer.history)?set.randomizer.history:[];set.randomizer.history.unshift({id:set.randomizer.run.id,startedAt:set.randomizer.run.startedAt,result:winner.action});set.randomizer.history=set.randomizer.history.slice(0,200);
  set.randomizer.lastWinnerName=winner.action;
  state.activeSet=set.id;activateSetSettings(set);localStorage.setItem(STORE,JSON.stringify(state));
- const ok=await cloudSaveActive(false);
- if(!ok){toast('Не удалось отправить запуск в Overlay');return}
+ // A spin only changes the run marker and history. Update the already-linked
+ // cloud row directly instead of running the full save flow (which performs
+ // an ownership lookup and then a full config upsert/update).
+ let ok=false;
+ try{
+  if(!currentUser||!set.cloudId)throw new Error('Облачный набор не привязан к аккаунту');
+  const payload={config:cloudConfig(set),updated_at:new Date().toISOString()};
+  const {data,error}=await db.from('gift_sets').update(payload)
+   .eq('id',set.cloudId).eq('owner_id',currentUser.id).select('id').single();
+  if(error)throw error;
+  if(!data)throw new Error('Облачный набор не найден');
+  ok=true;
+ }catch(error){console.error('[Randomizer] run update failed:',error);toast('Не удалось отправить запуск в Overlay: '+(error.message||error));}
+ if(!ok)return;
  $('randomizerWinner').textContent=winner.action;renderRandomizerHistory(set);
  toast('Запуск отправлен в Overlay');
 };
@@ -7022,17 +7034,16 @@ async function randomizerOverlayMode(){
   for(const voice of tickVoices){try{voice.pause();voice.currentTime=0;}catch(_e){}}
   tickVoices.length=0;
  }
- // Tick timing follows actual card-center crossings on the rendered CSS easing curve.
- // At high speed we thin out clicks and lower their volume; as the strip slows,
- // every crossing gets its own clearer click. Dropped frames are handled by
- // estimating each crossing time between the previous and current animation frame.
- function startRouletteTicks(track,windowEl,nodes){
+ // Tick cadence follows the animation progress, not instantaneous frame velocity.
+ // The allowed interval grows smoothly from fast clicks to spaced clicks, which
+ // prevents the old every-N-crossings logic from alternating between fast/slow bursts.
+ function startRouletteTicks(track,windowEl,nodes,endX){
   stopRouletteTicks();
   if(!track||!windowEl||!nodes||!nodes.length)return;
   const pointerX=windowEl.clientWidth/2;
-  const MIN_TICK_GAP=68;
+  const MIN_INTERVAL_START=58,MIN_INTERVAL_END=245;
   let nextIndex=0,previousCenterInTrack=null,previousFrameTime=null;
-  let previousCardCenter=null,lastAudibleCrossingAt=-Infinity,skipAccumulator=0;
+  let previousCardCenter=null,lastAudibleCrossingAt=-Infinity;
   const readTranslateX=()=>{
    const transform=getComputedStyle(track).transform;
    if(!transform||transform==='none')return 0;
@@ -7043,48 +7054,38 @@ async function randomizerOverlayMode(){
     return parts.length===16?parts[12]:(parts[4]||0);
    }
   };
-  // Establish the starting position before movement begins. The first card is
-  // already aligned under the pointer at spin start, so it is not a crossing.
-  previousCenterInTrack=pointerX-readTranslateX();
+  const startCenter=pointerX-readTranslateX();
+  previousCenterInTrack=startCenter;
   previousFrameTime=performance.now();
   while(nextIndex<nodes.length){
-   const initialCardCenter=nodes[nextIndex].offsetLeft+nodes[nextIndex].offsetWidth/2;
-   if(initialCardCenter>previousCenterInTrack+0.5)break;
-   previousCardCenter=initialCardCenter;
-   nextIndex++;
+   const center=nodes[nextIndex].offsetLeft+nodes[nextIndex].offsetWidth/2;
+   if(center>startCenter+0.5)break;
+   previousCardCenter=center;nextIndex++;
   }
   const checkCrossings=(frameTime)=>{
    tickRaf=0;
    const now=Number.isFinite(frameTime)?frameTime:performance.now();
-   const translateX=readTranslateX();
-   const centerInTrack=pointerX-translateX;
+   const centerInTrack=pointerX-readTranslateX();
    const elapsed=previousFrameTime===null?0:Math.max(1,now-previousFrameTime);
    const velocity=previousCenterInTrack===null?0:(centerInTrack-previousCenterInTrack)/elapsed;
+   let playedThisFrame=false;
    while(nextIndex<nodes.length){
     const card=nodes[nextIndex];
     const cardCenter=card.offsetLeft+card.offsetWidth/2;
     if(centerInTrack+0.5<cardCenter)break;
-    const distance=previousCardCenter===null?card.offsetWidth:(cardCenter-previousCardCenter);
-    const crossingInterval=velocity>0?distance/velocity:Infinity;
     const crossingAt=velocity>0?now-Math.max(0,centerInTrack-cardCenter)/velocity:now;
-    // Every 3rd crossing at extreme speed, every 2nd at high speed,
-    // and every crossing once the strip slows down.
-    const every=crossingInterval<55?3:(crossingInterval<95?2:1);
-    skipAccumulator++;
-    const selectedForSound=skipAccumulator>=every;
-    if(selectedForSound)skipAccumulator=0;
-    // A short guard prevents dense clicks from becoming a continuous buzz.
-    if(selectedForSound&&crossingAt-lastAudibleCrossingAt>=MIN_TICK_GAP){
-     // Keep each click at a stable level regardless of strip speed.
-     // Frequency thinning and overlap compensation control the perceived loudness.
-     playRouletteTick();
-     lastAudibleCrossingAt=crossingAt;
+    const travelDistance=Math.max(1,centerInTrack-startCenter);
+    const totalDistance=Math.max(1,(pointerX+Number(endX||0))-startCenter);
+    const progress=Math.max(0,Math.min(1,travelDistance/totalDistance));
+    // Smoothstep gives a gradual, monotonic slowdown without abrupt frequency steps.
+    const eased=progress*progress*(3-2*progress);
+    const requiredGap=MIN_INTERVAL_START+(MIN_INTERVAL_END-MIN_INTERVAL_START)*eased;
+    if(!playedThisFrame&&crossingAt-lastAudibleCrossingAt>=requiredGap){
+     playRouletteTick();lastAudibleCrossingAt=crossingAt;playedThisFrame=true;
     }
-    previousCardCenter=cardCenter;
-    nextIndex++;
+    previousCardCenter=cardCenter;nextIndex++;
    }
-   previousCenterInTrack=centerInTrack;
-   previousFrameTime=now;
+   previousCenterInTrack=centerInTrack;previousFrameTime=now;
    if(nextIndex<nodes.length)tickRaf=requestAnimationFrame(checkCrossings);
   };
   tickRaf=requestAnimationFrame(checkCrossings);
@@ -7176,7 +7177,7 @@ async function randomizerOverlayMode(){
     track.addEventListener('transitionend',onEnd);
     transitionFallback=setTimeout(finish,7900);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
-     startRouletteTicks(track,windowEl,nodes);
+     startRouletteTicks(track,windowEl,nodes,endX);
      track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
      track.style.transform=`translate3d(${-endX}px,0,0)`;
     }));
