@@ -5926,7 +5926,9 @@ function defaultSettings(){return {iconSize:64,textSize:12,textOffset:0,speed:28
 function initial(){const settings=defaultSettings();return {activeSet:'default',sets:[{id:'default',name:'Мои игровые действия',actions:[],settings:{...settings}}],settings:{...settings}}}
 function normalizePerSetSettings(data){
  const defaults=defaultSettings(),legacy={...defaults,...(data.settings||{})};
- data.sets.forEach(set=>{set.settings={...defaults,...(set.settings||legacy)}});
+ // Older saves may contain only a partial per-set settings object.
+ // Merge legacy global settings first, then let explicit per-set values win.
+ data.sets.forEach(set=>{set.settings={...legacy,...(set.settings||{})}});
  const selected=data.sets.find(set=>set.id===data.activeSet)||data.sets[0];
  data.activeSet=selected.id;data.settings={...selected.settings};return data;
 }
@@ -6072,7 +6074,7 @@ function authUi(user){
  if(!user)currentLicense={plan:'free',expires_at:null,is_active:false};
  updatePlanUi();
 }
-async function cloudLoadMine(){if(!currentUser)return;const {data,error}=await db.from('gift_sets').select('*').eq('owner_id',currentUser.id).order('updated_at',{ascending:false});if(error){toast('Не удалось загрузить наборы: '+error.message);return}if(!data?.length){toast('В облаке пока нет наборов');return}const sets=data.map(r=>({id:r.id,name:r.title,game:r.game||'',actions:r.config?.actions||[],settings:{...defaultSettings(),...(r.config?.settings||state.settings)},randomizer:r.config?.randomizer||null,cloudId:r.id,publicId:r.public_id,isPublic:r.is_public}));state.sets=sets;state.activeSet=sets[0].id;activateSetSettings(sets[0]);localStorage.setItem(STORE,JSON.stringify(state));render();toast('Загружено наборов: '+sets.length)}
+async function cloudLoadMine(){if(!currentUser)return;const {data,error}=await db.from('gift_sets').select('*').eq('owner_id',currentUser.id).order('updated_at',{ascending:false});if(error){toast('Не удалось загрузить наборы: '+error.message);return}if(!data?.length){toast('В облаке пока нет наборов');return}const sets=data.map(r=>({id:r.id,name:r.title,game:r.game||'',actions:r.config?.actions||[],settings:{...defaultSettings(),...(state.settings||{}),...(r.config?.settings||{})},randomizer:r.config?.randomizer||null,cloudId:r.id,publicId:r.public_id,isPublic:r.is_public}));state.sets=sets;state.activeSet=sets[0].id;activateSetSettings(sets[0]);localStorage.setItem(STORE,JSON.stringify(state));render();toast('Загружено наборов: '+sets.length)}
 async function publishActive(){
  if(!currentUser){toast('Сначала войди в облачный аккаунт');return false}
  const set=active();
