@@ -6694,11 +6694,13 @@ $('launchRandomizer').onclick=async()=>{
  // cloud row directly instead of running the full save flow (which performs
  // an ownership lookup and then a full config upsert/update).
  let ok=false;
+ const launchRequestStartedAt=performance.now();
  try{
   if(!currentUser||!set.cloudId)throw new Error('Облачный набор не привязан к аккаунту');
   const payload={config:cloudConfig(set),updated_at:new Date().toISOString()};
   const {data,error}=await db.from('gift_sets').update(payload)
    .eq('id',set.cloudId).eq('owner_id',currentUser.id).select('id').single();
+  console.info('[Randomizer timing] Supabase run update:',Math.round(performance.now()-launchRequestStartedAt)+' ms');
   if(error)throw error;
   if(!data)throw new Error('Облачный набор не найден');
   ok=true;
@@ -7006,91 +7008,92 @@ async function randomizerOverlayMode(){
   winnerAudio.preload='auto';winnerAudio.volume=0.82*overlaySoundVolume;
  }catch(audioError){console.warn('[Randomizer overlay] audio initialization failed:',audioError);}
  const TICK_BASE_VOLUME=0.44;
- const MAX_TICK_VOICES=3;
- function playRouletteTick(){
-  if(!tickAudioSrc||overlaySoundVolume<=0)return false;
-  try{
-   // Every click has its own media element. Keep a small polyphony cap and
-   // compensate each overlapping voice so perceived loudness stays steady.
-   const activeCount=tickVoices.length;
-   if(activeCount>=MAX_TICK_VOICES)return false;
-   const voice=new Audio(tickAudioSrc);
-   voice.preload='auto';
-   voice.volume=Math.max(0,Math.min(1,overlaySoundVolume*TICK_BASE_VOLUME/Math.sqrt(activeCount+1)));
-   tickVoices.push(voice);
-   const cleanup=()=>{const i=tickVoices.indexOf(voice);if(i!==-1)tickVoices.splice(i,1);};
-   voice.addEventListener('ended',cleanup,{once:true});
-   voice.addEventListener('error',cleanup,{once:true});
-   const playback=voice.play();
-   if(playback&&playback.catch)playback.catch(cleanup);
-   return true;
-  }catch(_e){return false;}
- }
- let tickRaf=0;
- function stopRouletteTicks(){
-  if(tickTimer)clearTimeout(tickTimer);
-  if(tickRaf)cancelAnimationFrame(tickRaf);
-  tickTimer=null;tickRaf=0;
-  for(const voice of tickVoices){try{voice.pause();voice.currentTime=0;}catch(_e){}}
-  tickVoices.length=0;
- }
- // Tick cadence follows the animation progress, not instantaneous frame velocity.
- // The allowed interval grows smoothly from fast clicks to spaced clicks, which
- // prevents the old every-N-crossings logic from alternating between fast/slow bursts.
- function startRouletteTicks(track,windowEl,nodes,endX){
-  stopRouletteTicks();
-  if(!track||!windowEl||!nodes||!nodes.length)return;
-  const pointerX=windowEl.clientWidth/2;
-  const MIN_INTERVAL_START=58,MIN_INTERVAL_END=245;
-  let nextIndex=0,previousCenterInTrack=null,previousFrameTime=null;
-  let previousCardCenter=null,lastAudibleCrossingAt=-Infinity;
-  const readTranslateX=()=>{
-   const transform=getComputedStyle(track).transform;
-   if(!transform||transform==='none')return 0;
-   try{return new DOMMatrixReadOnly(transform).m41;}catch(_e){
-    const values=transform.match(/matrix(?:3d)?\(([^)]+)\)/);
-    if(!values)return 0;
-    const parts=values[1].split(',').map(Number);
-    return parts.length===16?parts[12]:(parts[4]||0);
-   }
-  };
-  const startCenter=pointerX-readTranslateX();
-  previousCenterInTrack=startCenter;
-  previousFrameTime=performance.now();
-  while(nextIndex<nodes.length){
-   const center=nodes[nextIndex].offsetLeft+nodes[nextIndex].offsetWidth/2;
-   if(center>startCenter+0.5)break;
-   previousCardCenter=center;nextIndex++;
+  const MAX_TICK_VOICES=1;
+  function playRouletteTick(){
+   if(!tickAudioSrc||overlaySoundVolume<=0)return false;
+   try{
+    // Never overlap tick samples: one short click at a time avoids a noisy rattle.
+    if(tickVoices.length>=MAX_TICK_VOICES)return false;
+    const voice=new Audio(tickAudioSrc);
+    voice.preload='auto';
+    voice.playbackRate=1.45; // 116 ms source -> about 80 ms, short enough for the fastest cadence.
+    voice.volume=Math.max(0,Math.min(1,overlaySoundVolume*TICK_BASE_VOLUME));
+    tickVoices.push(voice);
+    const cleanup=()=>{const i=tickVoices.indexOf(voice);if(i!==-1)tickVoices.splice(i,1);};
+    voice.addEventListener('ended',cleanup,{once:true});
+    voice.addEventListener('error',cleanup,{once:true});
+    const playback=voice.play();
+    if(playback&&playback.catch)playback.catch(cleanup);
+    return true;
+   }catch(_e){return false;}
   }
-  const checkCrossings=(frameTime)=>{
-   tickRaf=0;
-   const now=Number.isFinite(frameTime)?frameTime:performance.now();
-   const centerInTrack=pointerX-readTranslateX();
-   const elapsed=previousFrameTime===null?0:Math.max(1,now-previousFrameTime);
-   const velocity=previousCenterInTrack===null?0:(centerInTrack-previousCenterInTrack)/elapsed;
-   let playedThisFrame=false;
-   while(nextIndex<nodes.length){
-    const card=nodes[nextIndex];
-    const cardCenter=card.offsetLeft+card.offsetWidth/2;
-    if(centerInTrack+0.5<cardCenter)break;
-    const crossingAt=velocity>0?now-Math.max(0,centerInTrack-cardCenter)/velocity:now;
-    const travelDistance=Math.max(1,centerInTrack-startCenter);
-    const totalDistance=Math.max(1,(pointerX+Number(endX||0))-startCenter);
-    const progress=Math.max(0,Math.min(1,travelDistance/totalDistance));
-    // Smoothstep gives a gradual, monotonic slowdown without abrupt frequency steps.
-    const eased=progress*progress*(3-2*progress);
-    const requiredGap=MIN_INTERVAL_START+(MIN_INTERVAL_END-MIN_INTERVAL_START)*eased;
-    if(!playedThisFrame&&crossingAt-lastAudibleCrossingAt>=requiredGap){
-     playRouletteTick();lastAudibleCrossingAt=crossingAt;playedThisFrame=true;
+  let tickRaf=0;
+  function stopRouletteTicks(){
+   if(tickTimer)clearTimeout(tickTimer);
+   if(tickRaf)cancelAnimationFrame(tickRaf);
+   tickTimer=null;tickRaf=0;
+   for(const voice of tickVoices){try{voice.pause();voice.currentTime=0;}catch(_e){}}
+   tickVoices.length=0;
+  }
+  // The first five seconds use a deliberate per-second cadence:
+  // 12, 10, 8, 6, then 4 clicks. From second five onward every
+  // card crossing the center marker produces one click.
+  function startRouletteTicks(track,windowEl,nodes,endX){
+   stopRouletteTicks();
+   if(!track||!windowEl||!nodes||!nodes.length)return;
+   const pointerX=windowEl.clientWidth/2;
+   const cadence=[12,10,8,6,4];
+   const clickSchedule=[];
+   cadence.forEach((count,second)=>{
+    for(let i=0;i<count;i++)clickSchedule.push(second*1000+i*(1000/count));
+   });
+   let scheduleIndex=0,nextIndex=0,previousCenterInTrack=null,previousFrameTime=null;
+   const startedAt=performance.now();
+   const readTranslateX=()=>{
+    const transform=getComputedStyle(track).transform;
+    if(!transform||transform==='none')return 0;
+    try{return new DOMMatrixReadOnly(transform).m41;}catch(_e){
+     const values=transform.match(/matrix(?:3d)?\(([^)]+)\)/);
+     if(!values)return 0;
+     const parts=values[1].split(',').map(Number);
+     return parts.length===16?parts[12]:(parts[4]||0);
     }
-    previousCardCenter=cardCenter;nextIndex++;
+   };
+   const initialCenter=pointerX-readTranslateX();
+   previousCenterInTrack=initialCenter;
+   previousFrameTime=startedAt;
+   while(nextIndex<nodes.length){
+    const center=nodes[nextIndex].offsetLeft+nodes[nextIndex].offsetWidth/2;
+    if(center>initialCenter+0.5)break;
+    nextIndex++;
    }
-   previousCenterInTrack=centerInTrack;previousFrameTime=now;
-   if(nextIndex<nodes.length)tickRaf=requestAnimationFrame(checkCrossings);
-  };
-  tickRaf=requestAnimationFrame(checkCrossings);
- }
- function playWinnerSound(){
+   const checkCrossings=(frameTime)=>{
+    tickRaf=0;
+    const now=Number.isFinite(frameTime)?frameTime:performance.now();
+    const elapsed=now-startedAt;
+    // Advance the schedule even after a dropped frame, but never fire a burst
+    // of overdue clicks: only a click that is still close to its slot is played.
+    while(scheduleIndex<clickSchedule.length&&clickSchedule[scheduleIndex]<=elapsed){
+     const due=clickSchedule[scheduleIndex++];
+     if(elapsed-due<=110)playRouletteTick();
+    }
+    const centerInTrack=pointerX-readTranslateX();
+    const frameDelta=Math.max(1,now-previousFrameTime);
+    const velocity=(centerInTrack-previousCenterInTrack)/frameDelta;
+    while(nextIndex<nodes.length){
+     const card=nodes[nextIndex];
+     const cardCenter=card.offsetLeft+card.offsetWidth/2;
+     if(centerInTrack+0.5<cardCenter)break;
+     const crossingAt=velocity>0?now-Math.max(0,centerInTrack-cardCenter)/velocity:now;
+     if(crossingAt-startedAt>=5000)playRouletteTick();
+     nextIndex++;
+    }
+    previousCenterInTrack=centerInTrack;previousFrameTime=now;
+    if(nextIndex<nodes.length||scheduleIndex<clickSchedule.length)tickRaf=requestAnimationFrame(checkCrossings);
+   };
+   tickRaf=requestAnimationFrame(checkCrossings);
+  }
+  function playWinnerSound(){
   if(!winnerAudio)return;
   try{winnerAudio.pause();winnerAudio.currentTime=0;const playback=winnerAudio.play();if(playback&&playback.catch)playback.catch(()=>{});}catch(_e){}
  }
@@ -7177,6 +7180,7 @@ async function randomizerOverlayMode(){
     track.addEventListener('transitionend',onEnd);
     transitionFallback=setTimeout(finish,7900);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(debugMode&&run.startedAt)debugWrite('Прокрутка началась через '+Math.max(0,Date.now()-new Date(run.startedAt).getTime())+' мс');
      startRouletteTicks(track,windowEl,nodes,endX);
      track.style.transition='transform 7.2s cubic-bezier(.08,.62,.08,1)';
      track.style.transform=`translate3d(${-endX}px,0,0)`;
@@ -7283,7 +7287,10 @@ async function randomizerOverlayMode(){
   if(busy||drawInFlight||!publicId)return;
   drawInFlight=true;
   try{
+   const pollStartedAt=performance.now();
    const {data,error}=await db.from('gift_sets').select('title,config,is_public,updated_at').eq('public_id',publicId).eq('is_public',true).maybeSingle();
+   const pollDuration=Math.round(performance.now()-pollStartedAt);
+   if(debugMode)debugWrite('Опрос Supabase: '+pollDuration+' мс');
    if(error||!data){if(!latestData)setOverlayMessage('Не удалось загрузить рандомайзер');return;}
    setOverlayMessage('');
    latestData=data;
@@ -7302,6 +7309,7 @@ async function randomizerOverlayMode(){
    if(!initialized){lastRunId=rand.run?.id||'';initialized=true;return;}
    if(rand.run?.id&&rand.run.id!==lastRunId&&!busy){
     lastRunId=rand.run.id;busy=true;
+    if(debugMode&&rand.run.startedAt)debugWrite('Команда запуска получена через '+Math.max(0,Date.now()-new Date(rand.run.startedAt).getTime())+' мс');
     void animateRun(cardCfg,selected,rand.run);
    }
   }catch(err){
