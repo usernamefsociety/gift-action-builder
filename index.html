@@ -6586,21 +6586,35 @@ function runRandomizerPreview(){
  const wait=$('randomizerPreviewWait'),roulette=$('randomizerPreviewRoulette'),track=$('randomizerPreviewTrack'),winner=$('randomizerPreviewWinner');
  const cards=[...track.children];if(!cards.length){toast('Добавь карточки в рандомайзер для предпросмотра');return}
  if(randomizerPreviewTimer)clearTimeout(randomizerPreviewTimer);
- wait.classList.add('fade-out');setTimeout(()=>{wait.style.display='none';roulette.classList.add('active');
-  const chosen=Math.max(0,Math.min(cards.length-1,Math.floor(cards.length*.78))),card=cards[chosen],viewport=roulette.clientWidth;
+ const reset=()=>{
+  winner.classList.remove('show');roulette.classList.remove('active','pointer-hidden','has-winner');
+  wait.style.display='';wait.classList.remove('fade-out');
+  track.style.transition='none';track.style.transform='translate3d(0,0,0)';
+ };
+ reset();
+ const spinDuration=3.234; // Длительность звука прокрутки, как в отдельном Overlay
+ wait.classList.add('fade-out');
+ randomizerPreviewTimer=setTimeout(()=>{
+  wait.style.display='none';roulette.classList.add('active');
+  const chosen=Math.max(0,Math.min(cards.length-1,Math.floor(cards.length*.78)));
+  const card=cards[chosen],viewport=roulette.clientWidth;
   const end=card.offsetLeft+card.offsetWidth/2-viewport/2;
-  requestAnimationFrame(()=>{track.style.transition='transform 6.8s cubic-bezier(.08,.62,.08,1)';track.style.transform=`translateX(${-end}px)`});
+  track.style.transform=`translate3d(0,0,0)`;void track.offsetWidth;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   track.style.transition=`transform ${spinDuration*1000}ms cubic-bezier(.08,.62,.08,1)`;
+   track.style.transform=`translate3d(${-end}px,0,0)`;
+  }));
   randomizerPreviewTimer=setTimeout(()=>{
    roulette.classList.add('pointer-hidden');
    randomizerPreviewTimer=setTimeout(()=>{
-    winner.style.width=card.offsetWidth+'px';winner.style.height=card.offsetHeight+'px';winner.style.left='50%';winner.classList.add('show');
+    winner.style.width=card.offsetWidth+'px';winner.style.height=card.offsetHeight+'px';winner.style.left='50%';
+    roulette.classList.add('has-winner');winner.classList.add('show');
     randomizerPreviewTimer=setTimeout(()=>{
-     winner.classList.remove('show');roulette.classList.remove('active');
-     setTimeout(()=>{wait.style.display='';wait.classList.remove('fade-out');track.style.transition='none';track.style.transform='translateX(0)';roulette.classList.remove('pointer-hidden')},1100)
+     reset();
     },3000);
    },380);
-  },7000);
- },1100);
+  },spinDuration*1000+100);
+ },1850);
 }
 $('previewRandomizerAnimation').onclick=runRandomizerPreview;
 function updateRandomizerTotals(){
@@ -7333,4 +7347,30 @@ if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode(
 /* Winner highlight sits behind the winning card, not over its contents. */
 .roulette-page .roulette-track{position:relative;z-index:9}
 .roulette-page .roulette-winner{z-index:8}
+</style>
+
+<style id="randomizer-preview-overlay-parity-v111">
+/* Preview uses the same card sizing, ribbon, pointer and winner-frame treatment as the live overlay. */
+.randomizer-overlay-preview .randomizer-preview-roulette{
+ box-sizing:border-box!important;
+ background:rgba(0,0,0,.75)!important;
+ border-top:2px solid rgba(255,255,255,.16)!important;
+ border-bottom:2px solid rgba(255,255,255,.16)!important;
+}
+.randomizer-overlay-preview .randomizer-preview-track>.tile{
+ width:var(--roulette-card-width,150px)!important;
+ min-width:var(--roulette-card-width,150px)!important;
+ max-width:var(--roulette-card-width,150px)!important;
+ height:var(--roulette-card-height,126px)!important;
+ min-height:var(--roulette-card-height,126px)!important;
+ box-sizing:border-box!important;
+}
+.randomizer-overlay-preview .randomizer-preview-track{position:relative;z-index:9}
+.randomizer-overlay-preview .randomizer-preview-winner{
+ z-index:8!important;
+ background:rgba(255,207,84,.4)!important;
+ border-color:rgba(255,207,84,.4)!important;
+ box-shadow:0 0 0 5px rgba(255,207,84,.16),0 0 42px rgba(255,207,84,.32)!important;
+}
+.randomizer-overlay-preview .randomizer-preview-roulette.pointer-hidden .randomizer-preview-pointer{opacity:0!important}
 </style>
