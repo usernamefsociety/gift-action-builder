@@ -6962,6 +6962,16 @@ async function randomizerOverlayMode(){
  root.innerHTML='<div id="randomizerWaitCard"></div><div class="roulette-shell is-hidden" id="rouletteShell"><div class="roulette-window" id="rouletteWindow"><div class="roulette-pointer"></div><div class="roulette-track" id="rouletteTrack"></div><div class="roulette-winner-label" id="rouletteWinnerLabel">ПОБЕДИТЕЛЬ</div><div class="roulette-winner" id="rouletteWinnerFrame" hidden></div></div></div>';
  document.body.append(root);
  const publicId=new URLSearchParams(location.search).get('randomizer');
+ const debugMode=new URLSearchParams(location.search).get('debug')==='1';
+ let debugPanel=null,debugStatus=null,debugLog=null;
+ function debugWrite(message){if(!debugMode||!debugLog)return;const line=document.createElement('div');line.textContent=new Date().toLocaleTimeString()+' — '+message;debugLog.prepend(line);while(debugLog.children.length>8)debugLog.lastChild.remove();}
+ function debugSetStatus(message,ok=false){if(!debugMode||!debugStatus)return;debugStatus.textContent=message;debugStatus.style.color=ok?'#8ee6a1':'#ffcf78';}
+ if(debugMode){
+  debugPanel=document.createElement('div');
+  debugPanel.style.cssText='position:fixed;z-index:999999;left:12px;top:12px;width:min(360px,calc(100vw - 24px));padding:12px;background:rgba(15,18,24,.94);color:#fff;border:1px solid #687080;border-radius:10px;font:12px/1.4 Arial,sans-serif;box-shadow:0 4px 20px #0008;';
+  debugPanel.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:6px">Диагностика TikFinity / Randomizer</div><div id="randDebugStatus">Подключение…</div><div style="display:flex;gap:6px;margin:9px 0;flex-wrap:wrap"><button data-test="1">Тест ×1</button><button data-test="5">Тест ×5</button><button data-test="10">Тест ×10</button></div><div id="randDebugLog" style="max-height:130px;overflow:auto;opacity:.9"></div><div style="margin-top:7px;opacity:.65">Панель видна только при параметре &debug=1</div>';
+  document.body.append(debugPanel);debugStatus=debugPanel.querySelector('#randDebugStatus');debugLog=debugPanel.querySelector('#randDebugLog');
+ }
 
  let tickAudioSrc=null,winnerAudio=null,tickTimer=null,tickElapsed=0,tickVoices=[],overlaySoundVolume=1;
  try{
@@ -7217,12 +7227,13 @@ async function randomizerOverlayMode(){
   if(giftRunQueue.length)void processGiftQueue();
  }
  function handleTikFinityMessage(raw){
-  let message;try{message=typeof raw==='string'?JSON.parse(raw):raw;}catch{return;}
-  if(message?.event!=='gift')return;
+  let message;try{message=typeof raw==='string'?JSON.parse(raw):raw;}catch(err){debugWrite('Получено не-JSON сообщение');return;}
+  if(message?.event!=='gift'){debugWrite('Событие: '+String(message?.event||'неизвестно'));return;}
   const data=message.data||message.payload||{};
   const incomingName=normalizeGiftName(data.giftName||data.gift?.name||data.name);
   const triggerName=selectedTriggerGiftName();
-  if(!triggerName||!incomingName||incomingName!==triggerName)return;
+  debugWrite('Подарок: '+(incomingName||'имя не найдено')+'; выбран: '+(triggerName||'не выбран'));
+  if(!triggerName||!incomingName||incomingName!==triggerName){debugWrite('Подарок не совпал — пропуск');return;}
   // Streak updates are cumulative. Wait for the final update and enqueue one spin per gift.
   if(data.repeatEnd===false)return;
   const comboId=data.groupId??data.comboId??data.streakId;
@@ -7238,16 +7249,21 @@ async function randomizerOverlayMode(){
  function connectTikFinity(){
   if(tikfinityStopped)return;
   try{
+   debugSetStatus('Подключаемся к ws://127.0.0.1:21213 …');
    tikfinitySocket=new WebSocket('ws://127.0.0.1:21213/');
+   tikfinitySocket.addEventListener('open',()=>{debugSetStatus('TikFinity подключён. Ожидаем события.',true);debugWrite('WebSocket подключён');});
    tikfinitySocket.addEventListener('message',event=>handleTikFinityMessage(event.data));
-   tikfinitySocket.addEventListener('close',()=>{tikfinitySocket=null;if(!tikfinityStopped)tikfinityReconnectTimer=setTimeout(connectTikFinity,3000);});
-   tikfinitySocket.addEventListener('error',()=>{try{tikfinitySocket?.close();}catch{}});
+   tikfinitySocket.addEventListener('close',()=>{debugSetStatus('WebSocket отключён. Повторное подключение…');debugWrite('WebSocket закрыт');tikfinitySocket=null;if(!tikfinityStopped)tikfinityReconnectTimer=setTimeout(connectTikFinity,3000);});
+   tikfinitySocket.addEventListener('error',()=>{debugSetStatus('Ошибка WebSocket. Проверить TikFinity / доступ браузера');debugWrite('Ошибка WebSocket');try{tikfinitySocket?.close();}catch{}});
   }catch(err){
+   debugSetStatus('Не удалось создать WebSocket: '+(err.message||err));
+   debugWrite('Ошибка подключения: '+(err.message||err));
    console.warn('[Randomizer overlay] TikFinity connection failed:',err);
    tikfinityReconnectTimer=setTimeout(connectTikFinity,5000);
   }
  }
  connectTikFinity();
+ if(debugMode){debugPanel.querySelectorAll('[data-test]').forEach(button=>button.addEventListener('click',()=>{const count=Number(button.dataset.test);debugWrite('Ручной тест: '+count+' запуск(ов)');enqueueGiftRuns(count);}));}
  async function draw(){
   if(busy||drawInFlight||!publicId)return;
   drawInFlight=true;
@@ -7256,6 +7272,8 @@ async function randomizerOverlayMode(){
    if(error||!data){if(!latestData)setOverlayMessage('Не удалось загрузить рандомайзер');return;}
    setOverlayMessage('');
    latestData=data;
+   const triggerLabel=selectedTriggerGiftName()||'не выбран';
+   if(debugMode)debugWrite('Настройки загружены. Подарок-триггер: '+triggerLabel);
    const cfg=data.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
    overlaySoundVolume=Math.max(0,Math.min(100,Number(rand.overlaySoundVolume??100)))/100;
    if(winnerAudio)winnerAudio.volume=0.82*overlaySoundVolume;
