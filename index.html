@@ -5990,11 +5990,17 @@ function updateFreeCardLimitUi(){
 }
 function cloudSetLimitReached(set){return !isPro()&&!set?.cloudId&&state.sets.filter(x=>!!x.cloudId).length>=1}
 function cloudConfig(set){return {actions:set.actions,settings:{...defaultSettings(),...(set.settings||state.settings)},randomizer:set.randomizer||null}}
-async function cloudSaveActive(show=true){
- if(!currentUser||cloudBusy)return;
- const set=active();if(!set)return;
+// Serialize cloud saves instead of silently dropping a save while another is in flight.
+let cloudSaveQueue=Promise.resolve();
+function cloudSaveActive(show=true){
+ const run=cloudSaveQueue.catch(()=>false).then(()=>cloudSaveActiveNow(show));
+ cloudSaveQueue=run;
+ return run;
+}
+async function cloudSaveActiveNow(show=true){
+ if(!currentUser)return false;
+ const set=active();if(!set)return false;
  if(cloudSetLimitReached(set)){if(show)toast('FREE позволяет хранить только 1 набор в облаке. Для дополнительных наборов нужен PRO.');return false}
- cloudBusy=true;
  try{
   let id=set.cloudId||null;
   let existingPublicId=set.publicId||null;
@@ -6057,7 +6063,6 @@ async function cloudSaveActive(show=true){
   if(show)toast('Набор сохранён в облаке');
   return true;
  }catch(e){console.error(e);if(show)toast('Ошибка облачного сохранения: '+(e.message||e));return false}
- finally{cloudBusy=false}
 }
 function authUi(user){
  currentUser=user;
@@ -6115,6 +6120,9 @@ async function initAuth(){
  const {data}=await db.auth.getSession();
  authUi(data.session?.user||null);
  await refreshLicense();
+ // Restore the authoritative cloud copy on page reload for signed-in users.
+ // Public overlays read this same gift_sets.config row, so editor and overlay stay in sync.
+ if(data.session?.user)await cloudLoadMine();
  db.auth.onAuthStateChange(async(_event,session)=>{authUi(session?.user||null);await refreshLicense()});
  }
 
