@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
-<title>Gift Action Builder — TikTok Gift Catalog</title>
+<title>Gift Action Builder v1.0 — TikTok Gift Catalog</title>
 <style>
 :root{color-scheme:dark;--bg:#0c0b12;--panel:#171522;--panel2:#211d30;--line:#302a40;--muted:#9d96ad;--text:#f5f1fb;--accent:#c58cff;--green:#61d6a1;--red:#ff7889}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0%,#241634 0,transparent 42%),var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,Segoe UI,sans-serif}
@@ -952,7 +952,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 </style>
 </head><body>
 <div id="app" class="app">
-<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
+<header class="top"><div class="brand"><div class="logo">✦</div><div><h1>Gift Action Builder</h1><div class="sub">Overlay · v1.0</div></div></div><button id="authToggle" class="auth-toggle">Войти в аккаунт</button></header>
 <div class="layout"><aside class="side"><div class="nav"><button class="active" data-tab="builder">✦ Конструктор действий</button><button data-tab="sets">▤ Наборы</button><button data-tab="randomizer">✧ Рандомайзер</button><button id="adminNav" data-tab="adminTab" class="hidden">⚙ Администрирование</button></div><div class="hint"></div></aside>
 <main class="main">
 <section class="panel" id="accountPanel"><div class="panelhead"><div><h2>Облачный аккаунт</h2><div class="sub" id="authStatus">Войди или зарегистрируйся, чтобы сохранять наборы в облаке</div></div><div class="row" style="gap:8px;flex-wrap:wrap;justify-content:flex-end"><span class="pill" id="cloudBadge">Локальный режим</span><span class="pill" id="planBadge">FREE</span></div></div><div class="formgrid"><div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div><div class="field"><label>Пароль</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Минимум 8 символов"></div></div><div class="actions" style="margin-top:12px"><button class="primary" id="signInBtn">Войти</button><button id="signUpBtn">Создать аккаунт</button><button id="signOutBtn" class="hidden">Выйти</button><button id="cloudLoadBtn" class="hidden">Загрузить мои наборы</button></div><div class="sub" id="planDescription" style="margin-top:9px">FREE: до 5 карточек и 1 облачного набора. PRO открывает все функции.</div></section>
@@ -1132,7 +1132,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 
 <section id="sets" class="tab hidden"><div class="panel"><div class="panelhead"><div><h2>Мои наборы</h2><div class="sub">Отдельные наборы действий для разных игр</div></div><button id="newSet" class="primary">＋ Новый набор</button></div><div id="setList"></div><div class="actions" style="margin-top:14px"><button id="exportBtn">Экспорт JSON</button><button id="importBtn">Импорт JSON</button><input id="importFile" type="file" accept="application/json" class="hidden"></div></div></section>
 
-<div class="footer">Gift Action Builder</div>
+<div class="footer">Gift Action Builder · v1.0</div>
 <div class="feedback-footer"><a href="https://t.me/username_fsociety_tt" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✈</span> Обратная связь в Telegram</a></div>
 </main></div></div><div class="toast" id="toast"></div>
 <dialog id="randomizerGiftDialog" class="catalogmodal"><div class="modalhead"><div><b>Каталог подарков</b><div class="sub">Выбери подарок для стартовой карточки рандомайзера</div></div><button type="button" id="closeRandomizerGiftDialog">✕</button></div><div class="modalbody"><label>Поиск подарка по названию</label><input id="randomizerGiftSearch" placeholder="Начни вводить название подарка…"><div class="row" style="margin-top:10px"><label style="margin:0;white-space:nowrap">Сортировка</label><select id="randomizerGiftSort" style="max-width:260px"><option value="priceAsc">От дешёвых к дорогим</option><option value="name">По алфавиту</option><option value="priceDesc">Сначала дорогие</option></select></div><div class="sub" id="randomizerGiftCount" style="margin-top:8px"></div><div class="cataloggrid" id="randomizerGiftGrid" style="max-height:62vh"></div></div></dialog>
@@ -7172,6 +7172,82 @@ async function randomizerOverlayMode(){
    busy=false;
   }
  }
+ // TikFinity Event API: gifts are handled locally by this browser source.
+ const giftRunQueue=[];
+ let queueWorkerRunning=false,tikfinitySocket=null,tikfinityReconnectTimer=null,tikfinityStopped=false;
+ const seenComboIds=new Set();
+ function normalizeGiftName(value){return String(value||'').trim().toLocaleLowerCase().replace(/\s+/g,' ')}
+ function selectedTriggerGiftName(){
+  const cfg=latestData?.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
+  const gift=giftById(Number(cardCfg.giftIndex));
+  return normalizeGiftName(gift?.name);
+ }
+ function chooseWeightedWinner(){
+  const cfg=latestData?.config||{},rand=cfg.randomizer||{},allActions=cfg.actions||[],items=rand.items||[];
+  const entries=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))}))
+   .filter(x=>x.action&&Number(x.item?.weight)>0);
+  const total=entries.reduce((sum,x)=>sum+Number(x.item.weight),0);
+  if(!entries.length||!(total>0))return null;
+  let roll=Math.random()*total;
+  for(const entry of entries){roll-=Number(entry.item.weight);if(roll<0)return entry.action;}
+  return entries[entries.length-1].action;
+ }
+ async function processGiftQueue(){
+  if(queueWorkerRunning)return;
+  queueWorkerRunning=true;
+  try{
+   while(giftRunQueue.length&&!tikfinityStopped){
+    if(!latestData){await delay(250);continue;}
+    const run=giftRunQueue.shift();
+    const cfg=latestData.config||{},rand=cfg.randomizer||{},cardCfg={...DEFAULT_RANDOMIZER_CARD,...(rand.cardSettings||{})};
+    const allActions=cfg.actions||[],items=rand.items||[];
+    const selected=items.map(item=>({item,action:allActions.find(a=>String(a.id)===String(item.actionId))})).filter(x=>x.action);
+    if(!selected.length)continue;
+    busy=true;
+    await animateRun(cardCfg,selected,{id:run.id,winnerActionId:run.winnerActionId,startedAt:run.startedAt});
+   }
+  }finally{queueWorkerRunning=false;}
+ }
+ function enqueueGiftRuns(count){
+  const safeCount=Math.max(1,Math.min(500,Math.floor(Number(count)||1)));
+  for(let i=0;i<safeCount;i++){
+   const winner=chooseWeightedWinner();if(!winner)break;
+   giftRunQueue.push({id:'gift-'+crypto.randomUUID(),winnerActionId:winner.id,startedAt:new Date().toISOString()});
+  }
+  if(giftRunQueue.length)void processGiftQueue();
+ }
+ function handleTikFinityMessage(raw){
+  let message;try{message=typeof raw==='string'?JSON.parse(raw):raw;}catch{return;}
+  if(message?.event!=='gift')return;
+  const data=message.data||message.payload||{};
+  const incomingName=normalizeGiftName(data.giftName||data.gift?.name||data.name);
+  const triggerName=selectedTriggerGiftName();
+  if(!triggerName||!incomingName||incomingName!==triggerName)return;
+  // Streak updates are cumulative. Wait for the final update and enqueue one spin per gift.
+  if(data.repeatEnd===false)return;
+  const comboId=data.groupId??data.comboId??data.streakId;
+  if(comboId!==undefined&&comboId!==null&&String(comboId)!==''){
+   const key=String(data.user?.uniqueId||data.uniqueId||data.userId||'')+'|'+String(data.giftId??'')+'|'+String(comboId);
+   if(seenComboIds.has(key))return;
+   seenComboIds.add(key);
+   if(seenComboIds.size>1000)seenComboIds.clear();
+  }
+  const count=Number(data.repeatCount??data.count??1);
+  enqueueGiftRuns(Number.isFinite(count)&&count>0?count:1);
+ }
+ function connectTikFinity(){
+  if(tikfinityStopped)return;
+  try{
+   tikfinitySocket=new WebSocket('ws://127.0.0.1:21213/');
+   tikfinitySocket.addEventListener('message',event=>handleTikFinityMessage(event.data));
+   tikfinitySocket.addEventListener('close',()=>{tikfinitySocket=null;if(!tikfinityStopped)tikfinityReconnectTimer=setTimeout(connectTikFinity,3000);});
+   tikfinitySocket.addEventListener('error',()=>{try{tikfinitySocket?.close();}catch{}});
+  }catch(err){
+   console.warn('[Randomizer overlay] TikFinity connection failed:',err);
+   tikfinityReconnectTimer=setTimeout(connectTikFinity,5000);
+  }
+ }
+ connectTikFinity();
  async function draw(){
   if(busy||drawInFlight||!publicId)return;
   drawInFlight=true;
