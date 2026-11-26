@@ -761,7 +761,7 @@ body.vertical-overlay.ticker-selected #app .preview{
 #randomizerCardPreview .tile:not(.graphic-tile){width:var(--panel-width,150px)!important;min-width:var(--panel-width,150px)!important;max-width:var(--panel-width,150px)!important;height:var(--panel-height,126px)!important;min-height:var(--panel-height,126px)!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#171522;border:1px solid #49355f;border-radius:12px;padding:8px}
 #randomizerCardPreview .tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
 #randomizerCardPreview .tile>b{font-family:var(--font-family,Inter,sans-serif);font-size:var(--text-size,12px);white-space:pre-line;text-align:center;color:#fff;font-weight:700;text-shadow:var(--outline-shadow,none)}
-#randomizerWaitCard .tile{margin:auto!important}
+#randomizerWaitCard .tile{margin:auto!important;translate:var(--randomizer-card-x,0px) var(--randomizer-card-y,0px)!important}
 #randomizerWaitCard .tile:not(.graphic-tile){background:#171522;border:1px solid #49355f;border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 #randomizerWaitCard .tile:not(.graphic-tile)>img{width:var(--icon-size,64px);height:var(--icon-size,64px);object-fit:contain}
 #randomizerWaitCard .tile>b{font-family:var(--font-family,Inter,sans-serif);font-size:var(--text-size,12px);color:#fff;font-weight:700;white-space:pre-line;text-align:center;text-shadow:var(--outline-shadow,none)}
@@ -1104,6 +1104,8 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
    <div class="field randomizer-image-setting"><label>Размер иконки подарка: <b class="rangeval" id="randomizerCardGiftIconSizeVal">36 px</b></label><input id="randomizerCardGiftIconSize" type="range" min="16" max="100" value="36"></div>
    <div class="field randomizer-image-setting"><label>Положение иконки по горизонтали: <b class="rangeval" id="randomizerCardGiftPosXVal">0 px</b></label><input id="randomizerCardGiftPosX" type="range" min="-100" max="100" value="0"></div>
    <div class="field randomizer-image-setting"><label>Положение иконки по вертикали: <b class="rangeval" id="randomizerCardGiftPosYVal">0 px</b></label><input id="randomizerCardGiftPosY" type="range" min="-100" max="100" value="0"></div>
+   <div class="field"><label>Положение карточки относительно ленты по горизонтали: <b class="rangeval" id="randomizerCardPositionXVal">0 px</b></label><input id="randomizerCardPositionX" type="range" min="-500" max="500" step="1" value="0"></div>
+   <div class="field"><label>Положение карточки относительно ленты по вертикали: <b class="rangeval" id="randomizerCardPositionYVal">0 px</b></label><input id="randomizerCardPositionY" type="range" min="-500" max="500" step="1" value="0"></div>
   </div></details>
   <details class="field full randomizer-fold"><summary>Размеры и оформление текста</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Размер подписи: <b class="rangeval" id="randomizerCardTextSizeVal">12 px</b></label><input id="randomizerCardTextSize" type="range" min="8" max="32" value="12"></div>
@@ -6407,7 +6409,7 @@ function randomizerEntries(set){
  const cfg=set?.randomizer;
  return Array.isArray(cfg?.items)?cfg.items:[];
 }
-const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',showCaption:true,cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0,textOffset:0,imageMode:'off',imageUrl:'',actionImageSize:80,actionImagePosX:0,actionImagePosY:0,giftIconSize:36,giftPosX:0,giftPosY:0};
+const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',showCaption:true,cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0,textOffset:0,imageMode:'off',imageUrl:'',actionImageSize:80,actionImagePosX:0,actionImagePosY:0,giftIconSize:36,giftPosX:0,giftPosY:0,positionX:0,positionY:0};
 function randomizerCardConfig(set){return {...DEFAULT_RANDOMIZER_CARD,...(set?.randomizer?.cardSettings||{})}}
 function randomizerCardMarkup(cfg){
  const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})},g=giftById(Number(c.giftIndex))||giftById(0)||{name:'Подарок',src:''};
@@ -6423,7 +6425,7 @@ function randomizerCardMarkup(cfg){
  return `<div class="${classes}" data-panel-color="${esc(c.panelColor||'#6d83ff')}" style="${common};${graphic?'':'background:linear-gradient(145deg,'+(c.panelColor||'#6d83ff')+'55,'+(c.panelColor||'#6d83ff')+'18);border:1px solid '+(c.panelColor||'#6d83ff')+';border-radius:12px;padding:10px;'}">${art}${imageArt}${giftArt}${caption}</div>`;
 }
 function readRandomizerCardControls(){
- return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value,showCaption:$('randomizerCardShowCaption').value==='on',textOffset:+$('randomizerCardTextOffset').value,imageMode:$('randomizerCardImageMode').value,imageUrl:randomizerCardImageUrl||'',actionImageSize:+$('randomizerCardActionImageSize').value,actionImagePosX:+$('randomizerCardActionImagePosX').value,actionImagePosY:+$('randomizerCardActionImagePosY').value,giftIconSize:+$('randomizerCardGiftIconSize').value,giftPosX:+$('randomizerCardGiftPosX').value,giftPosY:+$('randomizerCardGiftPosY').value};
+ return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value,showCaption:$('randomizerCardShowCaption').value==='on',textOffset:+$('randomizerCardTextOffset').value,imageMode:$('randomizerCardImageMode').value,imageUrl:randomizerCardImageUrl||'',actionImageSize:+$('randomizerCardActionImageSize').value,actionImagePosX:+$('randomizerCardActionImagePosX').value,actionImagePosY:+$('randomizerCardActionImagePosY').value,giftIconSize:+$('randomizerCardGiftIconSize').value,giftPosX:+$('randomizerCardGiftPosX').value,giftPosY:+$('randomizerCardGiftPosY').value,positionX:+$('randomizerCardPositionX').value,positionY:+$('randomizerCardPositionY').value};
 }
 function populateRandomizerGiftSelect(selected){
  const el=$('randomizerCardGift');if(!el)return;
@@ -6439,7 +6441,7 @@ function renderRandomizerCardEditor(set){
  $('randomizerCardName').value=c.action;$('randomizerCardStyle').value=c.cardStyle;$('randomizerCardColor').value=c.panelColor;
  $('randomizerCardWidth').value=c.panelWidth;$('randomizerCardHeight').value=c.panelHeight;$('randomizerCardIconSize').value=c.iconSize;
  $('randomizerCardTextSize').value=c.textSize;$('randomizerCardShowCaption').value=c.showCaption===false?'off':'on';$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);
- $('randomizerCardImageMode').value=c.imageMode||'off';$('randomizerCardTextOffset').value=c.textOffset||0;$('randomizerCardActionImageSize').value=c.actionImageSize||80;$('randomizerCardActionImagePosX').value=c.actionImagePosX||0;$('randomizerCardActionImagePosY').value=c.actionImagePosY||0;$('randomizerCardGiftIconSize').value=c.giftIconSize||36;$('randomizerCardGiftPosX').value=c.giftPosX||0;$('randomizerCardGiftPosY').value=c.giftPosY||0;
+ $('randomizerCardImageMode').value=c.imageMode||'off';$('randomizerCardTextOffset').value=c.textOffset||0;$('randomizerCardActionImageSize').value=c.actionImageSize||80;$('randomizerCardActionImagePosX').value=c.actionImagePosX||0;$('randomizerCardActionImagePosY').value=c.actionImagePosY||0;$('randomizerCardGiftIconSize').value=c.giftIconSize||36;$('randomizerCardGiftPosX').value=c.giftPosX||0;$('randomizerCardGiftPosY').value=c.giftPosY||0;$('randomizerCardPositionX').value=c.positionX??0;$('randomizerCardPositionY').value=c.positionY??0;
  setRandomizerCardImagePreview(randomizerCardImageUrl);
  updateRandomizerCardPreview();
 }
@@ -6450,7 +6452,7 @@ function setRandomizerCardImagePreview(url){
 }
 function updateRandomizerCardPreview(){
  const c=readRandomizerCardControls();
- for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize],['randomizerCardActionImageSizeVal',c.actionImageSize],['randomizerCardActionImagePosXVal',c.actionImagePosX],['randomizerCardActionImagePosYVal',c.actionImagePosY],['randomizerCardGiftIconSizeVal',c.giftIconSize],['randomizerCardGiftPosXVal',c.giftPosX],['randomizerCardGiftPosYVal',c.giftPosY],['randomizerCardTextOffsetVal',c.textOffset]])$(id).textContent=v+' px';
+ for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize],['randomizerCardActionImageSizeVal',c.actionImageSize],['randomizerCardActionImagePosXVal',c.actionImagePosX],['randomizerCardActionImagePosYVal',c.actionImagePosY],['randomizerCardGiftIconSizeVal',c.giftIconSize],['randomizerCardGiftPosXVal',c.giftPosX],['randomizerCardGiftPosYVal',c.giftPosY],['randomizerCardTextOffsetVal',c.textOffset],['randomizerCardPositionXVal',c.positionX],['randomizerCardPositionYVal',c.positionY]])$(id).textContent=v+' px';
  const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardGiftName').textContent=g?.name||'Подарок не выбран';
  $('randomizerCardImageUploadField').classList.toggle('hidden',c.imageMode!=='on');document.querySelectorAll('#randomizerCardPanel .randomizer-image-setting').forEach(el=>el.classList.toggle('hidden',c.imageMode!=='on'));
  $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
@@ -6458,7 +6460,7 @@ function updateRandomizerCardPreview(){
  if(typeof ensureGlassTintObserver==='function')ensureGlassTintObserver();
 }
 let randomizerCardImageUrl='',randomizerCardPendingImage=null,randomizerCardRemoveImage=false;
-for(const id of ['randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardShowCaption','randomizerCardFont','randomizerCardOutline','randomizerCardImageMode','randomizerCardTextOffset','randomizerCardActionImageSize','randomizerCardActionImagePosX','randomizerCardActionImagePosY','randomizerCardGiftIconSize','randomizerCardGiftPosX','randomizerCardGiftPosY']){ $(id).addEventListener('input',updateRandomizerCardPreview); $(id).addEventListener('change',updateRandomizerCardPreview); }
+for(const id of ['randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardShowCaption','randomizerCardFont','randomizerCardOutline','randomizerCardImageMode','randomizerCardTextOffset','randomizerCardActionImageSize','randomizerCardActionImagePosX','randomizerCardActionImagePosY','randomizerCardGiftIconSize','randomizerCardGiftPosX','randomizerCardGiftPosY','randomizerCardPositionX','randomizerCardPositionY']){ $(id).addEventListener('input',updateRandomizerCardPreview); $(id).addEventListener('change',updateRandomizerCardPreview); }
 $('openRandomizerGiftCatalog').onclick=()=>{$('randomizerGiftSearch').value='';$('randomizerGiftSort').value='priceAsc';drawRandomizerGiftCatalog();$('randomizerGiftDialog').showModal()};
 $('closeRandomizerGiftDialog').onclick=()=>$('randomizerGiftDialog').close();
 function drawRandomizerGiftCatalog(){
@@ -6538,9 +6540,10 @@ function buildWeightedRouletteSequence(entries){
  for(let i=sequence.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[sequence[i],sequence[j]]=[sequence[j],sequence[i]];}
  return sequence;
 }
+function applyRandomizerCardPosition(container,cfg){if(!container)return;container.style.setProperty('--randomizer-card-x',(Number(cfg?.positionX)||0)+'px');container.style.setProperty('--randomizer-card-y',(Number(cfg?.positionY)||0)+'px');}
 function renderRandomizerOverlayPreview(set){
  const wait=$('randomizerPreviewWait'),track=$('randomizerPreviewTrack'),winner=$('randomizerPreviewWinner');if(!wait||!track)return;
- wait.innerHTML=randomizerCardMarkup(randomizerCardConfig(set));
+ const cardCfg=randomizerCardConfig(set);wait.style.setProperty('--randomizer-card-x',(Number(cardCfg.positionX)||0)+'px');wait.style.setProperty('--randomizer-card-y',(Number(cardCfg.positionY)||0)+'px');wait.innerHTML=randomizerCardMarkup(cardCfg);
  const entries=(set.randomizer?.items||[]).map(item=>{const action=set.actions.find(a=>String(a.id)===String(item.actionId));return action?{item,action:{...action,hidden:false}}:null}).filter(Boolean);
  const sequence=buildWeightedRouletteSequence(entries);
  const old=state.activeSet,oldSettings=state.settings,oldActions=set.actions;
@@ -7081,6 +7084,7 @@ async function randomizerOverlayMode(){
  function showWaitingCard(cfg){
   const signature=JSON.stringify(cfg||{});
   if(signature!==lastCardSignature){waitCard.innerHTML=randomizerCardMarkup(cfg);lastCardSignature=signature;}
+  applyRandomizerCardPosition(waitCard,cfg);
   waitCard.style.display='';
   waitCard.querySelector('.tile')?.classList.remove('is-hidden');
   shell.classList.remove('is-visible');shell.classList.add('is-hidden');
@@ -7106,7 +7110,7 @@ async function randomizerOverlayMode(){
  }
  async function returnToWaiting(cfg){
   clearSpinTimers();
-  waitCard.innerHTML=randomizerCardMarkup(cfg);lastCardSignature=JSON.stringify(cfg||{});waitCard.style.display='';
+  waitCard.innerHTML=randomizerCardMarkup(cfg);lastCardSignature=JSON.stringify(cfg||{});applyRandomizerCardPosition(waitCard,cfg);waitCard.style.display='';
   const waitingTile=waitCard.querySelector('.tile');if(waitingTile)waitingTile.classList.add('is-hidden');
   shell.classList.remove('is-visible');shell.classList.add('is-hidden');
   root.classList.remove('has-winner','pointer-hidden');
@@ -7253,6 +7257,7 @@ if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode(
 .randomizer-history-date{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .randomizer-overlay-preview{position:relative;height:360px;overflow:hidden;border:1px solid #443653;border-radius:13px;background:radial-gradient(ellipse at 50% 50%,#21152f,#08070d 75%);display:flex;align-items:center;justify-content:center}
 .randomizer-preview-wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity 1.1s cubic-bezier(.22,.61,.36,1),transform 1.1s cubic-bezier(.22,.61,.36,1),filter 1.1s;transform:translateY(0)}
+#randomizerPreviewWait .tile{translate:var(--randomizer-card-x,0px) var(--randomizer-card-y,0px)!important}
 .randomizer-preview-wait.fade-out{opacity:0;transform:translateY(0) scale(.97);filter:blur(7px)}
 .randomizer-preview-roulette{position:absolute;left:0;right:0;top:50%;transform:translateY(calc(-50% + 12px)) scale(.985);opacity:0;filter:blur(5px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1),filter 1.1s;overflow:hidden;padding:22px 0;background:linear-gradient(180deg,#100e18ee,#21172eee 50%,#100e18ee);border-top:2px solid #684a86;border-bottom:2px solid #684a86}
 .randomizer-preview-roulette.active{opacity:1;transform:translateY(-50%) scale(1);filter:blur(0)}
