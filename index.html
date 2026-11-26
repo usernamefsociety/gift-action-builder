@@ -6207,8 +6207,8 @@ function tickerMarkup(){
   const giftArt=imageMode?(state.settings.showGiftIcon===false?'':`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`):`<img src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
   const graphicGiftArt=`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
   return (state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')
-   ?`<div class="tile graphic-tile${imageClass} ${state.settings.cardStyle==='neon'?'neon-tile':state.settings.cardStyle==='tile'?'tile-style-tile':'liquid-tile'}" data-panel-color="${a.panelColor||''}"${a.panelColor?` style="--panel-hue:${panelHue(a.panelColor)}deg;--glass-hue:${glassHue(a.panelColor)}deg"`:''}><img class="panel-art" src="${state.settings.cardStyle==='neon'?NEON_ART:state.settings.cardStyle==='tile'?TILE_ART:PANEL_ART}" alt="">${actionArt}${imageMode?giftArt:graphicGiftArt}<b>${esc(a.action)}</b></div>`
-   :`<div class="tile${imageClass}">${actionArt}${giftArt}<b>${esc(a.action)}</b></div>`;
+   ?`<div class="tile graphic-tile${imageClass} ${state.settings.cardStyle==='neon'?'neon-tile':state.settings.cardStyle==='tile'?'tile-style-tile':'liquid-tile'}" data-panel-color="${a.panelColor||''}"${a.panelColor?` style="--panel-hue:${panelHue(a.panelColor)}deg;--glass-hue:${glassHue(a.panelColor)}deg"`:''}><img class="panel-art" src="${state.settings.cardStyle==='neon'?NEON_ART:state.settings.cardStyle==='tile'?TILE_ART:PANEL_ART}" alt="">${actionArt}${imageMode?giftArt:graphicGiftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`
+   :`<div class="tile${imageClass}">${actionArt}${giftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`;
  }).join('');
 }
 function fillTicker(el,items){
