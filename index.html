@@ -699,7 +699,7 @@ body.vertical-overlay.ticker-selected #app .preview{
 }
 
 /* v72: allow captions to be hidden consistently across all Overlay styles */
-body.captions-hidden .tile>b{display:none!important}
+.tile.action-caption-hidden>b{display:none!important}
 
 /* v57: move graphic-card captions vertically without breaking their horizontal centering */
 #app .tile.graphic-tile>b, body.overlay .tile.graphic-tile>b{
@@ -1108,6 +1108,7 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
   <details class="field full randomizer-fold"><summary>Размеры и оформление текста</summary><div class="randomizer-fold-grid">
    <div class="field"><label>Размер подписи: <b class="rangeval" id="randomizerCardTextSizeVal">12 px</b></label><input id="randomizerCardTextSize" type="range" min="8" max="32" value="12"></div>
    <div class="field"><label>Положение подписи по вертикали: <b class="rangeval" id="randomizerCardTextOffsetVal">0 px</b></label><input id="randomizerCardTextOffset" type="range" min="-80" max="80" value="0"></div>
+   <div class="field"><label>Текст подписи карточки</label><select id="randomizerCardShowCaption"><option value="on">Показывать</option><option value="off">Скрывать</option></select></div>
    <div class="field"><label>Шрифт подписи</label><select id="randomizerCardFont"><option value="Inter, sans-serif">Inter</option><option value="Roboto, Arial, sans-serif">Roboto</option><option value="Open Sans, sans-serif">Open Sans</option><option value="Montserrat, sans-serif">Montserrat</option><option value="Lato, sans-serif">Lato</option></select></div>
    <div class="field"><label>Чёрная обводка текста</label><select id="randomizerCardOutline"><option value="0">Выключена</option><option value="1">Включена</option></select></div>
   </div></details>
@@ -6201,7 +6202,7 @@ function tickerMarkup(){
   const g=giftById(a.giftIndex);if(!g)return '';
   const hasActionImage=imageMode&&a.imageUrl;
   // In image mode every card uses the same layout, even when no custom artwork was uploaded.
-  const imageClass=(imageMode?' image-mode':'')+(state.settings.showCaption===false?' caption-hidden':'');
+  const imageClass=(imageMode?' image-mode':'')+(state.settings.showCaption===false?' action-caption-hidden':'');
   const actionArt=hasActionImage?`<img class="action-art" src="${esc(a.imageUrl)}" alt="">`:'';
   const giftArt=imageMode?(state.settings.showGiftIcon===false?'':`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`):`<img src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
   const graphicGiftArt=`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
@@ -6406,23 +6407,23 @@ function randomizerEntries(set){
  const cfg=set?.randomizer;
  return Array.isArray(cfg?.items)?cfg.items:[];
 }
-const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0,textOffset:0,imageMode:'off',imageUrl:'',actionImageSize:80,actionImagePosX:0,actionImagePosY:0,giftIconSize:36,giftPosX:0,giftPosY:0};
+const DEFAULT_RANDOMIZER_CARD={giftIndex:0,action:'ЗАПУСК РАНДОМАЙЗЕРА',showCaption:true,cardStyle:'standard',panelColor:'#6d83ff',panelWidth:150,panelHeight:126,iconSize:64,textSize:12,fontFamily:'Inter, sans-serif',textOutline:0,textOffset:0,imageMode:'off',imageUrl:'',actionImageSize:80,actionImagePosX:0,actionImagePosY:0,giftIconSize:36,giftPosX:0,giftPosY:0};
 function randomizerCardConfig(set){return {...DEFAULT_RANDOMIZER_CARD,...(set?.randomizer?.cardSettings||{})}}
 function randomizerCardMarkup(cfg){
  const c={...DEFAULT_RANDOMIZER_CARD,...(cfg||{})},g=giftById(Number(c.giftIndex))||giftById(0)||{name:'Подарок',src:''};
  const style=c.cardStyle||'standard',imageMode=c.imageMode==='on'&&!!c.imageUrl;
  const icon=triggerIconFor({giftIndex:Number(c.giftIndex)},g);
- const caption=esc(c.action||'ЗАПУСК РАНДОМАЙЗЕРА').replace(/\n/g,'<br>');
+ const caption=c.showCaption===false?'':`<b style="text-shadow:var(--outline-shadow);transform:translate(-50%,calc(0px - var(--text-offset)))">${esc(c.action||'ЗАПУСК РАНДОМАЙЗЕРА').replace(/\n/g,'<br>')}</b>`;
  const common=`--action-image-size:${Number(c.actionImageSize)||80}px;--action-image-pos-x:${Number(c.actionImagePosX)||0}px;--action-image-pos-y:${Number(c.actionImagePosY)||0}px;--gift-badge-size:${Number(c.giftIconSize)||36}px;--gift-pos-x:${Number(c.giftPosX)||0}px;--gift-pos-y:${Number(c.giftPosY)||0}px;--text-offset:${Number(c.textOffset)||0}px;--tile-width:${Number(c.panelWidth)||150}px;--panel-width:${Number(c.panelWidth)||150}px;--panel-height:${Number(c.panelHeight)||126}px;--icon-size:${Number(c.iconSize)||64}px;--text-size:${Number(c.textSize)||12}px;--font-family:${c.fontFamily||'Inter, sans-serif'};--panel-hue:${panelHue(c.panelColor||'#6d83ff')}deg;--glass-hue:${glassHue(c.panelColor||'#6d83ff')}deg;--outline-shadow:${Number(c.textOutline)?'0 -2px 0 #000,0 2px 0 #000,-2px 0 0 #000,2px 0 0 #000,-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000':'none'}`;
  const imageArt=imageMode?`<img class="action-art" src="${esc(c.imageUrl)}" alt="" style="width:var(--action-image-size);height:var(--action-image-size);transform:translate(calc(-50% + var(--action-image-pos-x)),calc(-50% - var(--action-image-pos-y)))">`:'';
  const giftArt=`<img class="gift-art" src="${esc(icon)}" alt="${esc(g.name)}" style="width:var(--gift-badge-size);height:var(--gift-badge-size);transform:translate(var(--gift-pos-x),calc(0px - var(--gift-pos-y)))">`;
  const graphic=['graphic','tile','neon'].includes(style);
  const classes=`tile${graphic?' graphic-tile':''}${imageMode?' image-mode':''} ${style==='neon'?'neon-tile':style==='tile'?'tile-style-tile':style==='graphic'?'liquid-tile':''}`;
  const art=graphic?`<img class="panel-art" data-panel-color="${esc(c.panelColor||'#6d83ff')}" src="${style==='neon'?NEON_ART:style==='tile'?TILE_ART:PANEL_ART}" alt="">`:'';
- return `<div class="${classes}" data-panel-color="${esc(c.panelColor||'#6d83ff')}" style="${common};${graphic?'':'background:linear-gradient(145deg,'+(c.panelColor||'#6d83ff')+'55,'+(c.panelColor||'#6d83ff')+'18);border:1px solid '+(c.panelColor||'#6d83ff')+';border-radius:12px;padding:10px;'}">${art}${imageArt}${giftArt}<b style="text-shadow:var(--outline-shadow);transform:translate(-50%,calc(0px - var(--text-offset)))">${caption}</b></div>`;
+ return `<div class="${classes}" data-panel-color="${esc(c.panelColor||'#6d83ff')}" style="${common};${graphic?'':'background:linear-gradient(145deg,'+(c.panelColor||'#6d83ff')+'55,'+(c.panelColor||'#6d83ff')+'18);border:1px solid '+(c.panelColor||'#6d83ff')+';border-radius:12px;padding:10px;'}">${art}${imageArt}${giftArt}${caption}</div>`;
 }
 function readRandomizerCardControls(){
- return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value,textOffset:+$('randomizerCardTextOffset').value,imageMode:$('randomizerCardImageMode').value,imageUrl:randomizerCardImageUrl||'',actionImageSize:+$('randomizerCardActionImageSize').value,actionImagePosX:+$('randomizerCardActionImagePosX').value,actionImagePosY:+$('randomizerCardActionImagePosY').value,giftIconSize:+$('randomizerCardGiftIconSize').value,giftPosX:+$('randomizerCardGiftPosX').value,giftPosY:+$('randomizerCardGiftPosY').value};
+ return {giftIndex:Number($('randomizerCardGift').value)||0,action:$('randomizerCardName').value.trim()||'ЗАПУСК РАНДОМАЙЗЕРА',cardStyle:$('randomizerCardStyle').value,panelColor:$('randomizerCardColor').value,panelWidth:+$('randomizerCardWidth').value,panelHeight:+$('randomizerCardHeight').value,iconSize:+$('randomizerCardIconSize').value,textSize:+$('randomizerCardTextSize').value,fontFamily:$('randomizerCardFont').value,textOutline:+$('randomizerCardOutline').value,showCaption:$('randomizerCardShowCaption').value==='on',textOffset:+$('randomizerCardTextOffset').value,imageMode:$('randomizerCardImageMode').value,imageUrl:randomizerCardImageUrl||'',actionImageSize:+$('randomizerCardActionImageSize').value,actionImagePosX:+$('randomizerCardActionImagePosX').value,actionImagePosY:+$('randomizerCardActionImagePosY').value,giftIconSize:+$('randomizerCardGiftIconSize').value,giftPosX:+$('randomizerCardGiftPosX').value,giftPosY:+$('randomizerCardGiftPosY').value};
 }
 function populateRandomizerGiftSelect(selected){
  const el=$('randomizerCardGift');if(!el)return;
@@ -6437,7 +6438,7 @@ function renderRandomizerCardEditor(set){
  populateRandomizerGiftSelect(c.giftIndex);
  $('randomizerCardName').value=c.action;$('randomizerCardStyle').value=c.cardStyle;$('randomizerCardColor').value=c.panelColor;
  $('randomizerCardWidth').value=c.panelWidth;$('randomizerCardHeight').value=c.panelHeight;$('randomizerCardIconSize').value=c.iconSize;
- $('randomizerCardTextSize').value=c.textSize;$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);
+ $('randomizerCardTextSize').value=c.textSize;$('randomizerCardShowCaption').value=c.showCaption===false?'off':'on';$('randomizerCardFont').value=c.fontFamily;$('randomizerCardOutline').value=String(c.textOutline||0);
  $('randomizerCardImageMode').value=c.imageMode||'off';$('randomizerCardTextOffset').value=c.textOffset||0;$('randomizerCardActionImageSize').value=c.actionImageSize||80;$('randomizerCardActionImagePosX').value=c.actionImagePosX||0;$('randomizerCardActionImagePosY').value=c.actionImagePosY||0;$('randomizerCardGiftIconSize').value=c.giftIconSize||36;$('randomizerCardGiftPosX').value=c.giftPosX||0;$('randomizerCardGiftPosY').value=c.giftPosY||0;
  setRandomizerCardImagePreview(randomizerCardImageUrl);
  updateRandomizerCardPreview();
@@ -6457,7 +6458,7 @@ function updateRandomizerCardPreview(){
  if(typeof ensureGlassTintObserver==='function')ensureGlassTintObserver();
 }
 let randomizerCardImageUrl='',randomizerCardPendingImage=null,randomizerCardRemoveImage=false;
-for(const id of ['randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardFont','randomizerCardOutline','randomizerCardImageMode','randomizerCardTextOffset','randomizerCardActionImageSize','randomizerCardActionImagePosX','randomizerCardActionImagePosY','randomizerCardGiftIconSize','randomizerCardGiftPosX','randomizerCardGiftPosY'])$(id).addEventListener('input',updateRandomizerCardPreview);
+for(const id of ['randomizerCardName','randomizerCardStyle','randomizerCardColor','randomizerCardWidth','randomizerCardHeight','randomizerCardIconSize','randomizerCardTextSize','randomizerCardShowCaption','randomizerCardFont','randomizerCardOutline','randomizerCardImageMode','randomizerCardTextOffset','randomizerCardActionImageSize','randomizerCardActionImagePosX','randomizerCardActionImagePosY','randomizerCardGiftIconSize','randomizerCardGiftPosX','randomizerCardGiftPosY']){ $(id).addEventListener('input',updateRandomizerCardPreview); $(id).addEventListener('change',updateRandomizerCardPreview); }
 $('openRandomizerGiftCatalog').onclick=()=>{$('randomizerGiftSearch').value='';$('randomizerGiftSort').value='priceAsc';drawRandomizerGiftCatalog();$('randomizerGiftDialog').showModal()};
 $('closeRandomizerGiftDialog').onclick=()=>$('randomizerGiftDialog').close();
 function drawRandomizerGiftCatalog(){
@@ -6874,7 +6875,7 @@ $('exportBtn').onclick=()=>{const a=document.createElement('a'),u=URL.createObje
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!Array.isArray(x.sets))throw Error();state=x;persist();render();toast('Наборы импортированы')}catch{alert('Не удалось импортировать файл')}e.target.value=''};
 $('refreshPreview').onclick=()=>{renderTicker();toast('Предпросмотр обновлён')};
 function syncControls(){applyPlanLocks();for(const [id,key,suffix] of [['iconSize','iconSize',' px'],['textSize','textSize',' px'],['textOffset','textOffset',' px'],['speed','speed',' сек'],['spacing','spacing',' px'],['rowCount','rowCount',''],['rowDuration','rowDuration',' сек'],['panelWidth','panelWidth',' px'],['panelHeight','panelHeight',' px'],['gridColumns','gridColumns',''],['gridColumnGap','gridColumnGap',' px'],['gridRowGap','gridRowGap',' px'],['giftPosX','giftPosX',' px'],['giftPosY','giftPosY',' px'],['actionImageSize','actionImageSize',' px'],['actionImagePosX','actionImagePosX',' px'],['actionImagePosY','actionImagePosY',' px']]){if($(id)){$(id).value=state.settings[key]??({textOffset:0,rowCount:5,rowDuration:5,panelWidth:150,panelHeight:126,gridColumns:5,gridColumnGap:22,gridRowGap:22}[key]??0);const label={iconSize:'iconVal',textSize:'textVal',textOffset:'textOffsetVal',speed:'speedVal',spacing:'gapVal',rowCount:'rowCountVal',rowDuration:'rowDurationVal',panelWidth:'panelWidthVal',panelHeight:'panelHeightVal',gridColumns:'gridColumnsVal',gridColumnGap:'gridColumnGapVal',gridRowGap:'gridRowGapVal',giftPosX:'giftPosXVal',giftPosY:'giftPosYVal',actionImageSize:'actionImageSizeVal',actionImagePosX:'actionImagePosXVal',actionImagePosY:'actionImagePosYVal'}[id];if($(label))$(label).textContent=$(id).value+suffix}}$('fontFamily').value=state.settings.fontFamily||'Inter, sans-serif';$('textOutline').value=String(state.settings.textOutline||0);$('overlayStyle').value=state.settings.overlayStyle||'ticker';if($('overlayOrientation'))$('overlayOrientation').value=state.settings.overlayOrientation||'horizontal';$('cardStyle').value=state.settings.cardStyle||'standard';$('panelColor').value=state.settings.panelColor||'#6d83ff';$('imageMode').value=state.settings.imageMode||'off';$('showCaption').value=state.settings.showCaption===false?'off':'on';$('showGiftIcon').value=state.settings.showGiftIcon===false?'off':'on';$('giftPosX').value=state.settings.giftPosX??0;$('giftPosY').value=state.settings.giftPosY??0;document.body.classList.toggle('rotator-selected',state.settings.overlayStyle==='rotator');document.body.classList.toggle('grid-selected',state.settings.overlayStyle==='grid');document.body.classList.toggle('ticker-selected',state.settings.overlayStyle==='ticker');document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');
-   document.body.classList.toggle('images-enabled',state.settings.imageMode==='on');document.body.classList.toggle('captions-hidden',state.settings.showCaption===false);document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile');document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')}
+   document.body.classList.toggle('images-enabled',state.settings.imageMode==='on');document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile');document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')}
 // Lightweight preview updates: visual sliders only touch CSS variables on existing DOM.
 let previewFrame=0, previewNeedsRebuild=false;
 function syncOverlayModeClasses(){
@@ -6886,7 +6887,7 @@ function syncOverlayModeClasses(){
  document.body.classList.toggle('graphic-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile');
  document.body.classList.toggle('panel-cards',state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon');
  document.body.classList.toggle('images-enabled',state.settings.imageMode==='on');
- document.body.classList.toggle('captions-hidden',state.settings.showCaption===false);
+ 
 }
 function readPreviewControls(){
  const numeric=['iconSize','textSize','textOffset','speed','spacing','rowCount','rowDuration','panelWidth','panelHeight','gridColumns','gridColumnGap','gridRowGap'];
@@ -7229,7 +7230,7 @@ function overlayMode(){
    lastPayload=signature;
    state=nextState;
    document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');
-   document.body.classList.toggle('captions-hidden',state.settings.showCaption===false);
+   
    fillTicker($('liveTicker'),tickerMarkup());recolorGlassIn($('liveTicker'));
  }
  awaitOverlayInitial();
