@@ -6143,9 +6143,13 @@ $('grantProBtn').onclick=()=>adminSetLicense('pro');
 $('revokeProBtn').onclick=()=>adminSetLicense('free');
 $('cloudSaveBtn').onclick=async()=>{
  if(freeCardOverLimit()){toast('Нельзя сохранить изменения: сначала сократите набор до 5 карточек. Удаление карточек сохраняется автоматически.');return}
+ // Read the current design controls before saving. Previously the main Save
+ // button persisted state.settings without first copying the visible controls.
+ previewSettingsFromControls();
+ storeActiveSettings();
  active().name=$('setName').value.trim()||'Новый набор';
  localStorage.setItem(STORE,JSON.stringify(state));
- if(!currentUser){document.body.classList.add('auth-open');toast('Войди в аккаунт, чтобы сохранить набор в облако');return}
+ if(!currentUser){document.body.classList.add('auth-open');toast('Настройки сохранены локально. Войди в аккаунт, чтобы сохранить набор в облако');return}
  await cloudSaveActive(true);
  renderSets();
 };
