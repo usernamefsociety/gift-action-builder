@@ -837,8 +837,9 @@ body.overlay #randomizerWaitCard .tile.image-mode>b{
 }
 </style>
 <style id="randomizer-preview-live-design">
-/* The non-functional icon-size slider is intentionally hidden. */
-#randomizerCardPanel .randomizer-unused-icon-size{display:none!important}
+/* Show the regular gift-icon size control in no-image mode. */
+#randomizerCardPanel .randomizer-unused-icon-size{display:block!important}
+#randomizerCardPanel .randomizer-unused-icon-size.hidden{display:none!important}
 
 /* Same roulette band, card sizing and center marker in preview and published overlay. */
 .roulette-page .roulette-shell{
@@ -6444,7 +6445,7 @@ function randomizerCardMarkup(cfg){
  const style=c.cardStyle||'standard',imageMode=c.imageMode==='on'&&!!c.imageUrl;
  const icon=triggerIconFor({giftIndex:Number(c.giftIndex)},g);
  const caption=c.showCaption===false?'':`<b style="color:var(--card-text-color);text-shadow:var(--outline-shadow);transform:translate(-50%,calc(0px - var(--text-offset)))">${esc(c.action||'ЗАПУСК РАНДОМАЙЗЕРА').replace(/\n/g,'<br>')}</b>`;
- const common=`--action-image-size:${Number(c.actionImageSize)||80}px;--action-image-pos-x:${Number(c.actionImagePosX)||0}px;--action-image-pos-y:${Number(c.actionImagePosY)||0}px;--gift-badge-size:${Number(c.giftIconSize)||36}px;--gift-pos-x:${Number(c.giftPosX)||0}px;--gift-pos-y:${Number(c.giftPosY)||0}px;--text-offset:${Number(c.textOffset)||0}px;--tile-width:${Number(c.panelWidth)||150}px;--panel-width:${Number(c.panelWidth)||150}px;--panel-height:${Number(c.panelHeight)||126}px;--icon-size:${Number(c.iconSize)||64}px;--text-size:${Number(c.textSize)||12}px;--font-family:${c.fontFamily||'Inter, sans-serif'};--card-text-color:${c.textColor||'#ffffff'};--gift-glow-filter:${giftGlowFilter(!!c.giftGlow,c.giftGlowColor)};--panel-hue:${panelHue(c.panelColor||'#6d83ff')}deg;--glass-hue:${glassHue(c.panelColor||'#6d83ff')}deg;--outline-shadow:${makeTextOutline(c.textOutlineColor,Number(c.textOutline))}`;
+ const common=`--action-image-size:${Number(c.actionImageSize)||80}px;--action-image-pos-x:${Number(c.actionImagePosX)||0}px;--action-image-pos-y:${Number(c.actionImagePosY)||0}px;--gift-badge-size:${Number(imageMode?c.giftIconSize:c.iconSize)||(imageMode?36:64)}px;--gift-pos-x:${Number(c.giftPosX)||0}px;--gift-pos-y:${Number(c.giftPosY)||0}px;--text-offset:${Number(c.textOffset)||0}px;--tile-width:${Number(c.panelWidth)||150}px;--panel-width:${Number(c.panelWidth)||150}px;--panel-height:${Number(c.panelHeight)||126}px;--icon-size:${Number(c.iconSize)||64}px;--text-size:${Number(c.textSize)||12}px;--font-family:${c.fontFamily||'Inter, sans-serif'};--card-text-color:${c.textColor||'#ffffff'};--gift-glow-filter:${giftGlowFilter(!!c.giftGlow,c.giftGlowColor)};--panel-hue:${panelHue(c.panelColor||'#6d83ff')}deg;--glass-hue:${glassHue(c.panelColor||'#6d83ff')}deg;--outline-shadow:${makeTextOutline(c.textOutlineColor,Number(c.textOutline))}`;
  const imageArt=imageMode?`<img class="action-art" src="${esc(c.imageUrl)}" alt="" style="width:var(--action-image-size);height:var(--action-image-size);transform:translate(calc(-50% + var(--action-image-pos-x)),calc(-50% - var(--action-image-pos-y)))">`:'';
  const giftArt=`<img class="gift-art" src="${esc(icon)}" alt="${esc(g.name)}" style="width:var(--gift-badge-size);height:var(--gift-badge-size);transform:translate(var(--gift-pos-x),calc(0px - var(--gift-pos-y)))">`;
  const graphic=['graphic','tile','neon'].includes(style);
@@ -6482,7 +6483,7 @@ function updateRandomizerCardPreview(){
  const c=readRandomizerCardControls();
  for(const [id,v] of [['randomizerCardWidthVal',c.panelWidth],['randomizerCardHeightVal',c.panelHeight],['randomizerCardIconSizeVal',c.iconSize],['randomizerCardTextSizeVal',c.textSize],['randomizerCardActionImageSizeVal',c.actionImageSize],['randomizerCardActionImagePosXVal',c.actionImagePosX],['randomizerCardActionImagePosYVal',c.actionImagePosY],['randomizerCardGiftIconSizeVal',c.giftIconSize],['randomizerCardGiftPosXVal',c.giftPosX],['randomizerCardGiftPosYVal',c.giftPosY],['randomizerCardTextOffsetVal',c.textOffset],['randomizerCardPositionXVal',c.positionX],['randomizerCardPositionYVal',c.positionY]])$(id).textContent=v+' px';
  const g=giftById(c.giftIndex);$('randomizerCardGiftIcon').src=g?.src||'';$('randomizerCardGiftName').textContent=g?.name||'Подарок не выбран';
- $('randomizerCardImageUploadField').classList.toggle('hidden',c.imageMode!=='on');document.querySelectorAll('#randomizerCardPanel .randomizer-image-setting').forEach(el=>el.classList.toggle('hidden',c.imageMode!=='on'));
+ $('randomizerCardImageUploadField').classList.toggle('hidden',c.imageMode!=='on');document.querySelectorAll('#randomizerCardPanel .randomizer-image-setting').forEach(el=>el.classList.toggle('hidden',c.imageMode!=='on'));const regularIconSize=$('randomizerCardPanel').querySelector('.randomizer-unused-icon-size');if(regularIconSize)regularIconSize.classList.toggle('hidden',c.imageMode==='on');
  $('randomizerCardPreview').innerHTML=randomizerCardMarkup(c);
  const tile=$('randomizerCardPreview').querySelector('.tile');if(tile){tile.style.margin='auto';tile.style.setProperty('--outline-shadow',makeTextOutline(c.textOutlineColor,c.textOutline));tile.style.setProperty('--card-text-color',c.textColor||'#ffffff');tile.style.setProperty('--gift-glow-filter',giftGlowFilter(c.giftGlow,c.giftGlowColor));}
  if(typeof ensureGlassTintObserver==='function')ensureGlassTintObserver();
@@ -7466,6 +7467,21 @@ if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode(
 }
 #actionTikFinityDebug button:hover{border-color:#bd8cff}
 #actionTikFinityDebug #actionTikFinityStatus{margin:3px 0;color:#ffcf78}
+</style>
+
+<style id="randomizer-card-live-size-fix-v115">
+/* Match the published waiting card dimensions to the editor preview. */
+body.overlay #randomizerWaitCard .tile{
+  width:var(--panel-width,150px)!important;
+  min-width:var(--panel-width,150px)!important;
+  max-width:var(--panel-width,150px)!important;
+  height:var(--panel-height,126px)!important;
+  min-height:var(--panel-height,126px)!important;
+  max-height:var(--panel-height,126px)!important;
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+}
+body.overlay #randomizerWaitCard .tile:not(.image-mode){overflow:visible!important}
 </style>
 </html>
 <style>
