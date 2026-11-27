@@ -6237,8 +6237,8 @@ function tickerMarkup(){
   const giftArt=imageMode?(state.settings.showGiftIcon===false?'':`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`):`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
   const graphicGiftArt=`<img class="gift-art" src="${triggerIconFor(a,g)}" alt="${esc(g.name)}">`;
   return (state.settings.cardStyle==='graphic'||state.settings.cardStyle==='tile'||state.settings.cardStyle==='neon')
-   ?`<div class="tile graphic-tile${imageClass} ${state.settings.cardStyle==='neon'?'neon-tile':state.settings.cardStyle==='tile'?'tile-style-tile':'liquid-tile'}" data-panel-color="${a.panelColor||''}"${a.panelColor?` style="--panel-hue:${panelHue(a.panelColor)}deg;--glass-hue:${glassHue(a.panelColor)}deg"`:''}><img class="panel-art" src="${state.settings.cardStyle==='neon'?NEON_ART:state.settings.cardStyle==='tile'?TILE_ART:PANEL_ART}" alt="">${actionArt}${imageMode?giftArt:graphicGiftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`
-   :`<div class="tile${imageClass}">${actionArt}${giftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`;
+   ?`<div class="tile graphic-tile${imageClass} ${state.settings.cardStyle==='neon'?'neon-tile':state.settings.cardStyle==='tile'?'tile-style-tile':'liquid-tile'}" data-action-id="${esc(a.id)}" data-panel-color="${a.panelColor||''}"${a.panelColor?` style="--panel-hue:${panelHue(a.panelColor)}deg;--glass-hue:${glassHue(a.panelColor)}deg"`:''}><img class="panel-art" src="${state.settings.cardStyle==='neon'?NEON_ART:state.settings.cardStyle==='tile'?TILE_ART:PANEL_ART}" alt="">${actionArt}${imageMode?giftArt:graphicGiftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`
+   :`<div class="tile${imageClass}" data-action-id="${esc(a.id)}">${actionArt}${giftArt}<b${state.settings.showCaption===false?' style="display:none!important"':''}>${esc(a.action)}</b></div>`;
  }).join('');
 }
 function fillTicker(el,items){
@@ -7284,15 +7284,126 @@ async function randomizerOverlayMode(){
  }
  await draw();setInterval(draw,500);
 }
-function overlayMode(){
+async function overlayMode(){
  document.body.className='overlay';
  $('app').remove();$('toast').remove();
  const root=document.createElement('div');
  root.className='overlaypage';
  root.innerHTML='<div class="tickerwrap"><div id="liveTicker" class="ticker"></div></div>';
  document.body.append(root);
- const overlayId=new URLSearchParams(location.search).get('overlay');
- let lastPayload='';
+ const params=new URLSearchParams(location.search);
+ const overlayId=params.get('overlay');
+ const debugMode=params.get('debug')==='1';
+ let lastPayload='',tikfinitySocket=null,tikfinityReconnectTimer=null,tikfinityStopped=false;
+ let debugPanel=null,debugStatus=null,debugLog=null;
+ const seenComboIds=new Set();
+ function debugWrite(message){
+   if(!debugMode||!debugLog)return;
+   const line=document.createElement('div');
+   line.textContent=new Date().toLocaleTimeString()+' — '+message;
+   debugLog.prepend(line);
+   while(debugLog.children.length>12)debugLog.lastChild.remove();
+ }
+ function debugSetStatus(message,ok=false){
+   if(!debugMode||!debugStatus)return;
+   debugStatus.textContent=message;
+   debugStatus.style.color=ok?'#8ee6a1':'#ffcf78';
+ }
+ function ensureDebugPanel(){
+   if(!debugMode||debugPanel)return;
+   debugPanel=document.createElement('div');
+   debugPanel.id='actionTikFinityDebug';
+   debugPanel.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:7px">Диагностика TikFinity · Карточки действий</div><div id="actionTikFinityStatus">Ожидание настроек…</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:9px 0"><button type="button" data-test-all>Тест всех карточек</button></div><div id="actionTikFinityTests" style="display:grid;gap:5px;margin-bottom:8px"></div><div id="actionTikFinityLog" style="max-height:150px;overflow:auto;opacity:.9"></div><div style="margin-top:7px;opacity:.65">Тестовые кнопки запускают анимацию локально и не отправляют событие в TikFinity</div>';
+   document.body.append(debugPanel);
+   debugStatus=debugPanel.querySelector('#actionTikFinityStatus');
+   debugLog=debugPanel.querySelector('#actionTikFinityLog');
+   debugPanel.querySelector('[data-test-all]').addEventListener('click',()=>{
+     const tiles=[...document.querySelectorAll('#liveTicker .tile[data-action-id]')];
+     tiles.forEach(tile=>pulseTile(tile));
+     debugWrite('Ручной тест: анимация всех карточек ('+tiles.length+')');
+   });
+   debugPanel.querySelector('#actionTikFinityTests').addEventListener('click',e=>{
+     const button=e.target.closest('[data-test-action]');
+     if(!button)return;
+     const tile=[...document.querySelectorAll('#liveTicker .tile[data-action-id]')].find(x=>x.dataset.actionId===button.dataset.testAction);
+     if(tile){pulseTile(tile);debugWrite('Ручной тест карточки: '+(button.dataset.testName||button.dataset.testAction));}
+   });
+ }
+ function refreshDebugTests(){
+   if(!debugMode||!debugPanel)return;
+   const host=debugPanel.querySelector('#actionTikFinityTests');
+   const actions=(active()?.actions||[]).filter(a=>!a.hidden);
+   host.innerHTML=actions.map(a=>{
+     const g=giftById(a.giftIndex);
+     return `<button type="button" data-test-action="${esc(a.id)}" data-test-name="${esc(g?.name||'Подарок')}">Тест: ${esc(g?.name||'Подарок')}</button>`;
+   }).join('');
+ }
+ function pulseTile(tile){
+   if(!tile||!tile.isConnected)return;
+   tile.classList.remove('gift-trigger-pulse');
+   // Force a restart when several matching gifts arrive close together.
+   void tile.offsetWidth;
+   tile.classList.add('gift-trigger-pulse');
+   clearTimeout(tile._giftPulseTimer);
+   tile._giftPulseTimer=setTimeout(()=>tile.classList.remove('gift-trigger-pulse'),1050);
+ }
+ function normalizeGiftName(name){return String(name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase();}
+ function handleTikFinityMessage(raw){
+   let message;
+   try{message=typeof raw==='string'?JSON.parse(raw):raw;}
+   catch{debugWrite('Получено не-JSON сообщение');return;}
+   if(message?.event!=='gift'){
+     if(message?.event)debugWrite('Событие: '+String(message.event));
+     return;
+   }
+   const data=message.data||message.payload||{};
+   const incomingName=normalizeGiftName(data.giftName||data.gift?.name||data.name);
+   if(!incomingName){debugWrite('Подарок получен, но имя не найдено в событии');return;}
+   // For streakable gifts, act only on the final cumulative update.
+   if(data.repeatEnd===false)return;
+   const comboId=data.groupId??data.comboId??data.streakId;
+   if(comboId!==undefined&&comboId!==null&&String(comboId)!==''){
+     const key=String(data.user?.uniqueId||data.uniqueId||data.userId||'')+'|'+String(data.giftId??'')+'|'+String(comboId);
+     if(seenComboIds.has(key))return;
+     seenComboIds.add(key);
+     if(seenComboIds.size>1000)seenComboIds.clear();
+   }
+   const matching=(active()?.actions||[]).filter(a=>{
+     if(a.hidden)return false;
+     const gift=giftById(a.giftIndex);
+     return gift&&normalizeGiftName(gift.name)===incomingName;
+   });
+   debugWrite('Подарок: '+incomingName+' · совпадений: '+matching.length);
+   if(!matching.length)return;
+   matching.forEach(action=>{
+     const tile=[...document.querySelectorAll('#liveTicker .tile[data-action-id]')].find(x=>x.dataset.actionId===action.id);
+     if(tile)pulseTile(tile);
+   });
+ }
+ function connectTikFinity(){
+   if(tikfinityStopped||tikfinitySocket)return;
+   try{
+     debugSetStatus('Подключение к ws://127.0.0.1:21213 …');
+     tikfinitySocket=new WebSocket('ws://127.0.0.1:21213/');
+     tikfinitySocket.addEventListener('open',()=>{debugSetStatus('TikFinity подключён. Ожидаем подарки.',true);debugWrite('WebSocket подключён');});
+     tikfinitySocket.addEventListener('message',event=>handleTikFinityMessage(event.data));
+     tikfinitySocket.addEventListener('close',()=>{
+       debugSetStatus('WebSocket отключён. Повторное подключение…');
+       debugWrite('WebSocket закрыт');tikfinitySocket=null;
+       if(!tikfinityStopped)tikfinityReconnectTimer=setTimeout(connectTikFinity,3000);
+     });
+     tikfinitySocket.addEventListener('error',()=>{
+       debugSetStatus('Ошибка WebSocket. Проверь TikFinity Desktop');
+       debugWrite('Ошибка WebSocket');
+       try{tikfinitySocket?.close();}catch{}
+     });
+   }catch(err){
+     tikfinitySocket=null;
+     debugSetStatus('Не удалось создать WebSocket: '+(err.message||err));
+     debugWrite('Ошибка подключения: '+(err.message||err));
+     tikfinityReconnectTimer=setTimeout(connectTikFinity,5000);
+   }
+ }
  async function draw(){
    let nextState;
    if(overlayId&&overlayId!=='1'){
@@ -7300,7 +7411,7 @@ function overlayMode(){
        .select('title,config,is_public,updated_at')
        .eq('public_id',overlayId).eq('is_public',true).maybeSingle();
      if(error||!data){
-       if(lastPayload!=='missing'){$('liveTicker').innerHTML='';lastPayload='missing'}
+       if(lastPayload!=='missing'){$('liveTicker').innerHTML='';lastPayload='missing';debugWrite('Публичный набор не найден или недоступен');}
        return;
      }
      nextState={
@@ -7311,18 +7422,55 @@ function overlayMode(){
      };
    }else nextState=load();
    const signature=JSON.stringify(nextState);
-   if(signature===lastPayload)return;
-   lastPayload=signature;
-   state=nextState;
-   document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');
-   
-   fillTicker($('liveTicker'),tickerMarkup());recolorGlassIn($('liveTicker'));
+   if(signature!==lastPayload){
+     lastPayload=signature;
+     state=nextState;
+     document.body.classList.toggle('vertical-overlay',state.settings.overlayOrientation==='vertical');
+     fillTicker($('liveTicker'),tickerMarkup());
+     recolorGlassIn($('liveTicker'));
+     debugWrite('Конфигурация загружена: '+(state.settings.overlayStyle||'ticker')+'; карточек: '+(active()?.actions||[]).filter(a=>!a.hidden).length);
+   }
+   if(state?.settings?.overlayStyle==='grid'){
+     ensureDebugPanel();
+     refreshDebugTests();
+     if(!tikfinitySocket)connectTikFinity();
+   }else{
+     if(tikfinitySocket){tikfinitySocket.close();tikfinitySocket=null;}
+     debugSetStatus('Интеграция TikFinity включается только для стиля «Сетка».');
+   }
  }
- awaitOverlayInitial();
- async function awaitOverlayInitial(){await draw();setInterval(draw,5000)}
+ ensureDebugPanel();
+ window.addEventListener('beforeunload',()=>{tikfinityStopped=true;clearTimeout(tikfinityReconnectTimer);try{tikfinitySocket?.close();}catch{}});
+ await draw();
+ setInterval(draw,5000);
 }
 if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode();else if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
-</script></body></html>
+</script></body>
+<style>
+/* v1.13: TikFinity gift pulse for action cards in Grid layout */
+.tile.gift-trigger-pulse>img{
+  animation:actionGiftPulse 1s ease-in-out both;
+  transform-origin:center center;
+}
+@keyframes actionGiftPulse{
+  0%,100%{scale:1;filter:brightness(1)}
+  42%,58%{scale:1.13;filter:brightness(1.22)}
+}
+#actionTikFinityDebug{
+  position:fixed;right:12px;top:12px;z-index:99999;
+  width:min(330px,calc(100vw - 24px));max-height:85vh;overflow:auto;
+  padding:12px;border:1px solid #59436f;border-radius:12px;
+  background:rgba(18,15,27,.96);color:#f4effa;
+  font:12px/1.45 Arial,sans-serif;box-shadow:0 8px 30px #0008;
+}
+#actionTikFinityDebug button{
+  border:1px solid #59436f;border-radius:7px;padding:6px 8px;
+  background:#30243f;color:#fff;font:inherit;cursor:pointer;text-align:left;
+}
+#actionTikFinityDebug button:hover{border-color:#bd8cff}
+#actionTikFinityDebug #actionTikFinityStatus{margin:3px 0;color:#ffcf78}
+</style>
+</html>
 <style>
 #randomizerWaitCard{display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:opacity .65s ease}
 #randomizerWaitCard .tile{transition:opacity .65s ease,transform .65s ease,filter .65s ease;will-change:opacity,transform,filter}
