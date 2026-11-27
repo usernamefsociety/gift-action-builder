@@ -7313,7 +7313,7 @@ async function overlayMode(){
    if(!debugMode||debugPanel)return;
    debugPanel=document.createElement('div');
    debugPanel.id='actionTikFinityDebug';
-   debugPanel.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:7px">Диагностика TikFinity · Карточки действий</div><div id="actionTikFinityStatus">Ожидание настроек…</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:9px 0"><button type="button" data-test-all>Тест всех карточек</button></div><div id="actionTikFinityTests" style="display:grid;gap:5px;margin-bottom:8px"></div><div id="actionTikFinityLog" style="max-height:150px;overflow:auto;opacity:.9"></div><div style="margin-top:7px;opacity:.65">Тестовые кнопки запускают анимацию локально и не отправляют событие в TikFinity</div>';
+   debugPanel.innerHTML='<div style="font-weight:700;font-size:14px;margin-bottom:7px">Диагностика TikFinity · Все стили оверлея</div><div id="actionTikFinityStatus">Ожидание настроек…</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:9px 0"><button type="button" data-test-all>Тест всех карточек</button></div><div id="actionTikFinityTests" style="display:grid;gap:5px;margin-bottom:8px"></div><div id="actionTikFinityLog" style="max-height:150px;overflow:auto;opacity:.9"></div><div style="margin-top:7px;opacity:.65">Тестовые кнопки запускают анимацию локально и не отправляют событие в TikFinity</div>';
    document.body.append(debugPanel);
    debugStatus=debugPanel.querySelector('#actionTikFinityStatus');
    debugLog=debugPanel.querySelector('#actionTikFinityLog');
@@ -7325,8 +7325,9 @@ async function overlayMode(){
    debugPanel.querySelector('#actionTikFinityTests').addEventListener('click',e=>{
      const button=e.target.closest('[data-test-action]');
      if(!button)return;
-     const tile=[...document.querySelectorAll('#liveTicker .tile[data-action-id]')].find(x=>x.dataset.actionId===button.dataset.testAction);
-     if(tile){pulseTile(tile);debugWrite('Ручной тест карточки: '+(button.dataset.testName||button.dataset.testAction));}
+     const tiles=[...document.querySelectorAll('#liveTicker .tile[data-action-id]')].filter(x=>x.dataset.actionId===button.dataset.testAction);
+     tiles.forEach(pulseTile);
+     if(tiles.length)debugWrite('Ручной тест карточки: '+(button.dataset.testName||button.dataset.testAction)+' · экземпляров: '+tiles.length);
    });
  }
  function refreshDebugTests(){
@@ -7430,14 +7431,10 @@ async function overlayMode(){
      recolorGlassIn($('liveTicker'));
      debugWrite('Конфигурация загружена: '+(state.settings.overlayStyle||'ticker')+'; карточек: '+(active()?.actions||[]).filter(a=>!a.hidden).length);
    }
-   if(state?.settings?.overlayStyle==='grid'){
-     ensureDebugPanel();
-     refreshDebugTests();
-     if(!tikfinitySocket)connectTikFinity();
-   }else{
-     if(tikfinitySocket){tikfinitySocket.close();tikfinitySocket=null;}
-     debugSetStatus('Интеграция TikFinity включается только для стиля «Сетка».');
-   }
+   // TikFinity gift triggers are supported for every overlay style.
+   ensureDebugPanel();
+   refreshDebugTests();
+   if(!tikfinitySocket)connectTikFinity();
  }
  ensureDebugPanel();
  window.addEventListener('beforeunload',()=>{tikfinityStopped=true;clearTimeout(tikfinityReconnectTimer);try{tikfinitySocket?.close();}catch{}});
@@ -7447,14 +7444,14 @@ async function overlayMode(){
 if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode();else if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
 </script></body>
 <style>
-/* v1.13: TikFinity gift pulse for action cards in Grid layout */
-.tile.gift-trigger-pulse>img{
+/* v1.14: TikFinity gift pulse for action cards in every overlay style */
+.tile.gift-trigger-pulse>:not(b){
   animation:actionGiftPulse 1s ease-in-out both;
   transform-origin:center center;
 }
 @keyframes actionGiftPulse{
-  0%,100%{scale:1;filter:brightness(1)}
-  42%,58%{scale:1.13;filter:brightness(1.22)}
+  0%,100%{scale:1}
+  42%,58%{scale:1.12}
 }
 #actionTikFinityDebug{
   position:fixed;right:12px;top:12px;z-index:99999;
