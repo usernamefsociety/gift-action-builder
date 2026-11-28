@@ -6224,7 +6224,7 @@ function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200)}
 function render(){
  const s=active();activateSetSettings(s);$('setName').value=s.name;$('giftCount').textContent=s.actions.length+' действий';
- $('actionList').innerHTML=s.actions.length?s.actions.map(a=>{const g=giftById(a.giftIndex);return `<div class="giftcard ${a.hidden?'action-hidden':''}"><img src="${triggerIconFor(a,g)}" alt=""><div class="detail"><strong>${esc(g.name)}</strong><div class="sub">${giftPrice(g.name)===null?'Цена неизвестна':giftPrice(g.name)+' монет'}${a.hidden?' · Скрыто из Overlay':''}</div><div class="action">${esc(a.action)}</div></div><div class="tools"><button data-up="${a.id}" title="Переместить выше" ${s.actions.indexOf(a)===0?'disabled':''}>↑</button><button data-down="${a.id}" title="Переместить ниже" ${s.actions.indexOf(a)===s.actions.length-1?'disabled':''}>↓</button><button data-edit="${a.id}" title="Редактировать">✎</button><button data-hide="${a.id}" title="${a.hidden?'Показать действие в Overlay':'Скрыть действие из Overlay'}">${a.hidden?'◉':'⊘'}</button><button class="danger" data-del="${a.id}" title="Удалить">×</button></div></div>`}).join(''):`<div class="empty">Пока нет действий. Нажми «Добавить действие», выбери подарок из каталога и впиши подпись.</div>`;
+ $('actionList').innerHTML=s.actions.length?s.actions.map(a=>{const g=giftById(a.giftIndex);return `<div class="giftcard ${a.hidden?'action-hidden':''}"><img src="${triggerIconFor(a,g)}" alt=""><div class="detail"><strong>${esc(g.name)}</strong><div class="sub">${giftPrice(g.name)===null?'Цена неизвестна':giftPrice(g.name)+' монет'}${a.hidden?' · Скрыто из Overlay':''}</div><div class="action">${esc(a.action)}</div></div><div class="tools"><button class="drag-handle" type="button" draggable="true" data-drag-handle="${a.id}" title="Перетащить, чтобы изменить порядок" aria-label="Перетащить карточку для изменения порядка">☰</button><button data-up="${a.id}" title="Переместить выше" ${s.actions.indexOf(a)===0?'disabled':''}>↑</button><button data-down="${a.id}" title="Переместить ниже" ${s.actions.indexOf(a)===s.actions.length-1?'disabled':''}>↓</button><button data-edit="${a.id}" title="Редактировать">✎</button><button data-hide="${a.id}" title="${a.hidden?'Показать действие в Overlay':'Скрыть действие из Overlay'}">${a.hidden?'◉':'⊘'}</button><button class="danger" data-del="${a.id}" title="Удалить">×</button></div></div>`}).join(''):`<div class="empty">Пока нет действий. Нажми «Добавить действие», выбери подарок из каталога и впиши подпись.</div>`;
  renderTicker();renderSets();syncControls();updateFreeCardLimitUi();if(!$('randomizer').classList.contains('hidden'))renderRandomizer();
 }
 function tickerMarkup(){
@@ -6907,6 +6907,57 @@ $('actionPanelColor').oninput=()=>{actionPanelColor=$('actionPanelColor').value}
  persist();$('actionDialog').close();render();toast('Действие сохранено');
 };
 $('addAction').onclick=()=>{if(freeCardLimitReached()){toast('FREE позволяет добавить не более 5 карточек. Для дополнительных карточек нужен PRO.');return}openDialog()};
+
+// v1.16: drag-and-drop ordering for action cards.
+let draggedActionId=null;
+const actionListEl=$('actionList');
+actionListEl.addEventListener('dragstart',e=>{
+ const handle=e.target.closest('[data-drag-handle]');
+ if(!handle){e.preventDefault();return}
+ draggedActionId=handle.dataset.dragHandle;
+ const row=handle.closest('.giftcard');
+ if(row)row.classList.add('dragging');
+ if(e.dataTransfer){
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',draggedActionId);
+ }
+});
+actionListEl.addEventListener('dragover',e=>{
+ if(!draggedActionId)return;
+ const row=e.target.closest('.giftcard');
+ if(!row||row.querySelector('[data-drag-handle]')?.dataset.dragHandle===draggedActionId)return;
+ e.preventDefault();
+ if(e.dataTransfer)e.dataTransfer.dropEffect='move';
+ actionListEl.querySelectorAll('.giftcard.drag-over').forEach(el=>el.classList.remove('drag-over'));
+ row.classList.add('drag-over');
+});
+actionListEl.addEventListener('drop',e=>{
+ if(!draggedActionId)return;
+ const row=e.target.closest('.giftcard');
+ if(!row)return;
+ e.preventDefault();
+ const targetId=row.querySelector('[data-drag-handle]')?.dataset.dragHandle;
+ if(!targetId||targetId===draggedActionId)return;
+ const list=active().actions;
+ const from=list.findIndex(a=>String(a.id)===String(draggedActionId));
+ const to=list.findIndex(a=>String(a.id)===String(targetId));
+ if(from<0||to<0)return;
+ const [moved]=list.splice(from,1);
+ list.splice(to,0,moved);
+ persist();
+ render();
+ toast('Порядок карточек изменён');
+});
+function clearActionDragState(){
+ draggedActionId=null;
+ actionListEl.querySelectorAll('.giftcard.dragging,.giftcard.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+}
+actionListEl.addEventListener('dragend',clearActionDragState);
+actionListEl.addEventListener('dragleave',e=>{
+ const row=e.target.closest('.giftcard');
+ if(row&&!row.contains(e.relatedTarget))row.classList.remove('drag-over');
+});
+
 $('actionList').onclick=e=>{
  const del=e.target.closest('[data-del]');
  if(freeCardOverLimit()&&!del){toast('Сначала удалите лишние карточки: при превышении лимита FREE доступны только удаления.');return}
@@ -7443,7 +7494,31 @@ async function overlayMode(){
  setInterval(draw,5000);
 }
 if(new URLSearchParams(location.search).has('randomizer'))randomizerOverlayMode();else if(new URLSearchParams(location.search).has('overlay'))overlayMode();else{activateSetSettings();syncControls();render();initAuth().catch(e=>{console.error(e);toast('Не удалось подключиться к Supabase: '+(e.message||e))})};
-</script></body>
+</script>
+<style id="action-card-drag-reorder-v116">
+/* Drag handle and drop target feedback for action cards */
+.giftcard .tools .drag-handle{
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  color:#c9b6df;
+  min-width:30px;
+  font-size:15px;
+  letter-spacing:-2px;
+  padding:6px 7px;
+  border:1px solid transparent;
+  background:transparent;
+}
+.giftcard .tools .drag-handle:hover{
+  color:#fff;
+  border-color:#76608e;
+  background:#282032;
+}
+.giftcard .tools .drag-handle:active{cursor:grabbing}
+.giftcard.dragging{opacity:.42;border-style:dashed}
+.giftcard.drag-over{border-color:#a77be8;box-shadow:0 0 0 2px #a77be833}
+</style>
+</body>
 <style>
 /* v1.14: TikFinity gift pulse for action cards in every overlay style */
 .tile.gift-trigger-pulse>:not(b){
